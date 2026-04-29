@@ -1,0 +1,690 @@
+# =============================================================================
+# MockingHAL self-description configuration
+#
+# Describes the MockingHAL application and its entry points.
+# The root resource links to HAL+JSON, XML, and YAML representations of the
+# same information, and carries CURI documentation for every link relation.
+# =============================================================================
+
+# ── API root ──────────────────────────────────────────────────────────────────
+api_root:
+  path:
+    /:
+      method:
+        GET:
+          code: 200
+          headerIn:
+            Accept:
+              "application/hal\\+xml":
+                headerOut:
+                  Content-Type: application/hal+xml
+                resource: |
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <resource href="/" xmlns:mocking="/docs/">
+                    <link rel="self" href="/"/>
+                    <link rel="curies" name="mocking" href="/docs/{rel}" templated="true"/>
+                    <link rel="mocking:hal"     href="/" type="application/hal+json" title="API root — HAL+JSON format"/>
+                    <link rel="mocking:xml"     href="/" type="application/hal+xml"  title="API description in HAL+XML format"/>
+                    <link rel="mocking:yaml"    href="/" type="application/hal+yaml" title="API description in HAL+YAML format"/>
+                    <title>MockingHAL</title>
+                    <version>1.0</version>
+                    <description>
+                      Configurable mock HTTP server that serves HAL resources from a
+                      YAML configuration file.
+                    </description>
+                    <entryPoints>
+                      <entryPoint method="GET" path="/" type="application/hal+json">
+                        Returns the API root as a HAL+JSON resource.  The root is the
+                        single discovery point for all other resources and operations.
+                      </entryPoint>
+                      <entryPoint method="POST" path="/" accepts="application/yaml application/json multipart/form-data">
+                        Replaces the entire loaded configuration with the request body.
+                        Returns 204 No Content on success, 400 Bad Request on error.
+                      </entryPoint>
+                      <entryPoint method="PATCH" path="/" accepts="application/yaml application/json multipart/form-data">
+                        Appends the request body to the currently loaded configuration.
+                        Colliding top-level keys are overridden; others are preserved.
+                      </entryPoint>
+                    </entryPoints>
+                    <configFormat>
+                      A YAML or JSON object whose top-level keys are arbitrary labels.
+                      Each label maps to a TreeNode with request-matching filters
+                      (path, method, body, headerIn) and response elements
+                      (code, resource, headerOut).
+                    </configFormat>
+                  </resource>
+
+              "application/hal\\+yaml":
+                headerOut:
+                  Content-Type: application/hal+yaml
+                resource: |
+                  _links:
+                    self:
+                      href: /
+                    curies:
+                      - name: mocking
+                        href: "/docs/{rel}"
+                        templated: true
+                    "mocking:hal":
+                      href: /
+                      type: application/hal+json
+                      title: API root — HAL+JSON format
+                    "mocking:xml":
+                      href: /
+                      type: application/hal+xml
+                      title: API description in HAL+XML format
+                    "mocking:yaml":
+                      href: /
+                      type: application/hal+yaml
+                      title: API description in HAL+YAML format
+                    "mocking:replace":
+                      href: /
+                      title: "POST / — replace the entire loaded configuration"
+                    "mocking:append":
+                      href: /
+                      title: "PATCH / — append to the currently loaded configuration"
+                    "mocking:reset":
+                      href: /
+                      title: "DELETE / — reset to the built-in default configuration"
+                  title: MockingHAL
+                  version: "1.0"
+                  description: >-
+                    Configurable mock HTTP server that serves HAL resources from a
+                    YAML configuration file.
+                  entryPoints:
+                    root:
+                      method: GET
+                      path: /
+                      contentType: application/hal+json
+                      description: >-
+                        Returns the API root as a HAL+JSON resource.  Follow links
+                        from here to discover all other resources and operations.
+                    replace:
+                      method: POST
+                      path: /
+                      accepts: [application/yaml, application/json, multipart/form-data]
+                      description: >-
+                        Replaces the entire loaded configuration with the request body.
+                        Returns 204 No Content on success, 400 Bad Request on error.
+                    append:
+                      method: PATCH
+                      path: /
+                      accepts: [application/yaml, application/json, multipart/form-data]
+                      description: >-
+                        Appends the request body to the currently loaded configuration.
+                        Colliding top-level keys are overridden; all others are preserved.
+                  configFormat:
+                    topLevel: Arbitrary label keys mapping to TreeNode objects.
+                    filters: [path, method, body, headerIn]
+                    responseElements: [code, resource, headerOut]
+                    note: >-
+                      Filters compose by nesting.  Response elements accumulate as the
+                      request-matching tree is traversed toward a leaf node.
+
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              self:
+                href: /
+              curies:
+                - name: mocking
+                  href: "/docs/{rel}"
+                  templated: true
+              "mocking:hal":
+                href: /
+                type: application/hal+json
+                title: API root — this resource, in HAL+JSON format
+              "mocking:xml":
+                href: /
+                type: application/hal+xml
+                title: API description in HAL+XML format
+              "mocking:yaml":
+                href: /
+                type: application/hal+yaml
+                title: API description in HAL+YAML format
+              "mocking:":
+                href: /
+                title: End point to get root documentation page
+            title: MockingHAL
+            version: "1.0"
+            description: >-
+              MockingHAL is a configurable mock HTTP server that serves
+              any HTTP response described in a YAML (or JSON) configuration
+              file.  It is designed to prototype HAL APIs, demonstrate HAL
+              concepts, and support integration testing without a real backend.
+              Replace or extend the loaded configuration at runtime via POST
+              or PATCH on the root URL.
+            entry_point_root: >-
+              GET / — returns this HAL+JSON resource.  The root is the single
+              discovery point: all other resources and operations are reachable
+              by following typed link relations from here.
+            entry_point_replace: >-
+              POST / — replaces the entire loaded configuration with the
+              YAML or JSON body.  Also accepts multipart/form-data or
+              multipart/mixed, with one configuration block per part (parts
+              are merged in order).  Returns 204 No Content on success, or
+              400 Bad Request if the body cannot be parsed or contains an
+              invalid regex pattern.
+            entry_point_append: >-
+              PATCH / — merges the supplied configuration into the currently
+              loaded resources.  Top-level keys that collide with existing
+              entries are overridden; all other entries are preserved.
+              Accepts the same content types as POST /.
+            config_format: >-
+              A configuration document is a YAML or JSON object whose
+              top-level keys are arbitrary labels used only for identification.
+              Each label maps to a TreeNode that specifies request-matching
+              filters (path, method, body, headerIn) and response elements
+              (code, resource, headerOut).  Filters compose by nesting —
+              a path node may contain a method node which may contain further
+              path or body nodes.
+            usage_replace: "curl -X POST http://localhost:8080/
+              -H 'Content-Type: application/yaml'
+              --data-binary @my-api.yaml"
+            usage_append: "curl -X PATCH http://localhost:8080/
+              -H 'Content-Type: application/yaml'
+              --data-binary @extra-routes.yaml"
+            usage_multipart: "curl -X POST http://localhost:8080/
+              -F part1=@base.yaml
+              -F part2=@overlay.yaml"
+# ── Documentation pages ───────────────────────────────────────────────────────
+# Served at /docs/{rel} — the CURI-expanded URL for each mocking: relation.
+docs:
+  path:
+    /docs:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: text/html; charset=utf-8
+          path:
+            "/?":
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>MockingHAL — Documentation</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                  .note{background:#fffbdd;border-left:4px solid #e6c000;padding:.6em 1em;margin:1em 0}
+                </style>
+                </head>
+                <body>
+                <h1>MockingHAL</h1>
+                <div class="note">
+                  Configurable mock HTTP server that serves HAL resources from a YAML
+                  configuration file.
+                </div>
+                <h2>Configuration guide</h2>
+                <ul>
+                  <li><a href="/docs/config">Configuration guide</a> — how to write MockingHAL configs
+                    (<a href="/docs/config/structure">structure</a>,
+                     <a href="/docs/config/routing">routing</a>,
+                     <a href="/docs/config/selectors">selectors</a>,
+                     <a href="/docs/config/response">response</a>,
+                     <a href="/docs/config/combining">combining</a>,
+                     <a href="/docs/config/yaml-tips">YAML tips</a>,
+                     <a href="/docs/config/examples">examples</a>)
+                  </li>
+                </ul>
+                <h2>Entry points</h2>
+                <ul>
+                  <li>
+                    <a href="/docs/hal"><code>GET /</code></a> — API root
+                    (<code>application/hal+json</code>)
+                  </li>
+                  <li>
+                    <a href="/docs/xml"><code>GET /</code></a> — same info as
+                    <code>application/hal+xml</code>
+                  </li>
+                  <li>
+                    <a href="/docs/yaml"><code>GET /</code></a> — same info as
+                    <code>application/hal+yaml</code>
+                  </li>
+                  <li>
+                    <a href="/docs/replace"><code>POST /</code></a> — replace the loaded
+                    configuration
+                  </li>
+                  <li>
+                    <a href="/docs/append"><code>PATCH /</code></a> — append to the loaded
+                    configuration
+                  </li>
+                </ul>
+                <h2>Quick start</h2>
+                <pre>## Load a configuration
+                curl -X POST http://localhost:8080/ \
+                  -H 'Content-Type: application/yaml' \
+                  --data-binary @my-api.yaml
+
+                ## Extend the current configuration
+                curl -X PATCH http://localhost:8080/ \
+                  -H 'Content-Type: application/yaml' \
+                  --data-binary @extra-routes.yaml</pre>
+                <h2>Configuration format</h2>
+                <p>
+                  A configuration document is a YAML or JSON object.  Top-level keys are
+                  arbitrary labels.  Each label maps to a <strong>TreeNode</strong> that
+                  specifies request-matching filters and response elements:
+                </p>
+                <ul>
+                  <li><strong>Filters</strong>: <code>path</code>, <code>method</code>,
+                    <code>body</code>, <code>headerIn</code></li>
+                  <li><strong>Response elements</strong>: <code>code</code>,
+                    <code>resource</code>, <code>headerOut</code></li>
+                </ul>
+                <p>
+                  Filters compose by nesting.  Response elements accumulate as the
+                  matching tree is traversed toward a leaf node.
+                </p>
+                </body>
+                </html>
+            /hal:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>mocking:hal — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>mocking:hal</code></h1>
+                <p>
+                  Links to <a href="/"><code>GET /</code></a> — the API root returned as
+                  <code>application/hal+json</code>.
+                </p>
+                <h2>What this resource contains</h2>
+                <ul>
+                  <li><strong><code>_links</code></strong> — typed links to all entry points
+                    and alternate representations, each annotated with a <code>type</code>
+                    media-type hint and a CURI pointing to this documentation.</li>
+                  <li><strong>Properties</strong> — human-readable descriptions of every
+                    entry point and the configuration format.</li>
+                </ul>
+                <h2>HAL+JSON</h2>
+                <p>
+                  <a href="https://datatracker.ietf.org/doc/html/draft-kelly-json-hal">HAL</a>
+                  (Hypertext Application Language) embeds typed hyperlinks in JSON responses.
+                  The <code>_links</code> object maps relation names to link objects, each with
+                  at minimum an <code>href</code>.  Optional fields include <code>type</code>
+                  (media-type hint), <code>title</code> (human label), <code>templated</code>
+                  (RFC 6570 URI Template), and <code>hreflang</code> (language tag).
+                  CURIes (<code>curies</code>) provide short prefixes like
+                  <code>mocking:</code> that expand to documentation URLs.
+                </p>
+                <p>Try it: <code>curl http://localhost:8080/</code></p>
+                </body>
+                </html>
+            /xml:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>mocking:xml — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>mocking:xml</code></h1>
+                <p>
+                  Links to <a href="/alternate/xml"><code>GET /alternate/xml</code></a> —
+                  the same API description returned as <code>application/hal+xml</code>.
+                </p>
+                <h2>HAL+XML format</h2>
+                <p>
+                  HAL+XML represents the resource as a <code>&lt;resource&gt;</code> element.
+                  Links appear as <code>&lt;link&gt;</code> child elements with
+                  <code>rel</code>, <code>href</code>, and optional <code>type</code>,
+                  <code>title</code>, <code>name</code>, and <code>templated</code>
+                  attributes.  Properties are further child elements named after the
+                  property key.
+                </p>
+                <h2>When to use</h2>
+                <p>
+                  Use this link when your client consumes XML.  The document contains
+                  the same entry-point, link, and configuration-format information as
+                  the HAL+JSON root, structured as HAL+XML.
+                </p>
+                <p>Try it: <code>curl http://localhost:8080/alternate/xml</code></p>
+                </body>
+                </html>
+            /yaml:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>mocking:yaml — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>mocking:yaml</code></h1>
+                <p>
+                  Links to <a href="/alternate/yaml"><code>GET /alternate/yaml</code></a> —
+                  the same API description returned as <code>application/hal+yaml</code>.
+                </p>
+                <h2>HAL+YAML format</h2>
+                <p>
+                  HAL+YAML follows the same conventions as HAL+JSON but expressed in YAML.
+                  The <code>_links</code> key holds a map of relation names to link objects,
+                  using the same field names (<code>href</code>, <code>type</code>,
+                  <code>title</code>, <code>templated</code>, etc.).  Properties appear
+                  as sibling keys alongside <code>_links</code>.
+                </p>
+                <h2>When to use</h2>
+                <p>
+                  Use this link when your client consumes YAML, or when you want a
+                  human-readable form of the API description.  The structure mirrors the
+                  MockingHAL configuration format itself, making it easy to see how
+                  entry points would be described in a config file.
+                </p>
+                <p>Try it: <code>curl http://localhost:8080/alternate/yaml</code></p>
+                </body>
+                </html>
+            /replace:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>mocking:replace — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                  table{border-collapse:collapse;width:100%;margin:1em 0}
+                  th,td{border:1px solid #ccc;padding:.45em .8em;text-align:left}
+                  th{background:#e8e8e8}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Operation: <code>POST /</code> — replace configuration</h1>
+                <p>
+                  Replaces the <strong>entire</strong> loaded configuration with the
+                  YAML or JSON document supplied in the request body.  All previously
+                  loaded resources are discarded.
+                </p>
+                <h2>Request</h2>
+                <table>
+                  <tr><th>Method</th><td><code>POST</code></td></tr>
+                  <tr><th>Path</th><td><code>/</code></td></tr>
+                  <tr><th>Content-Type</th><td>
+                    <code>application/yaml</code>, <code>application/json</code>,
+                    <code>multipart/form-data</code>, or <code>multipart/mixed</code>
+                  </td></tr>
+                  <tr><th>Body</th><td>A valid MockingHAL configuration document</td></tr>
+                </table>
+                <h2>Response</h2>
+                <table>
+                  <tr><th>204 No Content</th><td>Configuration loaded successfully</td></tr>
+                  <tr><th>400 Bad Request</th><td>Body could not be parsed or contains an invalid regex</td></tr>
+                </table>
+                <h2>Multipart support</h2>
+                <p>
+                  When the content type is <code>multipart/form-data</code> or
+                  <code>multipart/mixed</code>, each part is parsed as a separate
+                  configuration block and merged in order before replacing.  Parts may
+                  be file uploads (<code>FileItem</code>) or inline form fields
+                  (<code>FormItem</code>).
+                </p>
+                <h2>Examples</h2>
+                <pre>## Plain YAML body
+                curl -X POST http://localhost:8080/ \
+                  -H 'Content-Type: application/yaml' \
+                  --data-binary @my-api.yaml
+
+                ## Multipart — two files merged then loaded
+                curl -X POST http://localhost:8080/ \
+                  -F part1=@base.yaml \
+                  -F part2=@overlay.yaml</pre>
+                <p>
+                  To <em>extend</em> the current config without discarding it, use
+                  <a href="/docs/append"><code>PATCH /</code></a> instead.
+                </p>
+                </body>
+                </html>
+            /append:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>mocking:append — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                  table{border-collapse:collapse;width:100%;margin:1em 0}
+                  th,td{border:1px solid #ccc;padding:.45em .8em;text-align:left}
+                  th{background:#e8e8e8}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Operation: <code>PATCH /</code> — append to configuration</h1>
+                <p>
+                  Merges the YAML or JSON document in the request body <strong>into</strong>
+                  the currently loaded configuration.  Top-level keys that collide with
+                  existing entries are overridden; all other entries are preserved.
+                </p>
+                <h2>Request</h2>
+                <table>
+                  <tr><th>Method</th><td><code>PATCH</code></td></tr>
+                  <tr><th>Path</th><td><code>/</code></td></tr>
+                  <tr><th>Content-Type</th><td>
+                    <code>application/yaml</code>, <code>application/json</code>,
+                    <code>multipart/form-data</code>, or <code>multipart/mixed</code>
+                  </td></tr>
+                  <tr><th>Body</th><td>A valid MockingHAL configuration document</td></tr>
+                </table>
+                <h2>Response</h2>
+                <table>
+                  <tr><th>204 No Content</th><td>Configuration appended successfully</td></tr>
+                  <tr><th>400 Bad Request</th><td>Body could not be parsed or contains an invalid regex</td></tr>
+                </table>
+                <h2>Key-collision semantics</h2>
+                <ul>
+                  <li>If the incoming document has a top-level key that already exists,
+                    the new entry <strong>replaces</strong> the old one entirely.</li>
+                  <li>Keys present in the current config but absent from the incoming
+                    document are left untouched.</li>
+                  <li>The merged result preserves original insertion order for surviving
+                    keys; new keys are appended at the end.</li>
+                </ul>
+                <h2>Examples</h2>
+                <pre>## Add new routes without losing the loaded config
+                curl -X PATCH http://localhost:8080/ \
+                  -H 'Content-Type: application/yaml' \
+                  --data-binary @extra-routes.yaml
+
+                ## Override one named block while keeping everything else
+                curl -X PATCH http://localhost:8080/ \
+                  -H 'Content-Type: application/yaml' \
+                  --data-binary @updated-block.yaml</pre>
+                <p>
+                  To <em>discard</em> the current config and start fresh, use
+                  <a href="/docs/replace"><code>POST /</code></a> instead.
+                </p>
+                </body>
+                </html>
+            /reset:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>mocking:reset — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                  table{border-collapse:collapse;width:100%;margin:1em 0}
+                  th,td{border:1px solid #ccc;padding:.45em .8em;text-align:left}
+                  th{background:#e8e8e8}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Operation: <code>DELETE /</code> — reset configuration</h1>
+                <p>
+                  Discards the entire loaded configuration and reloads the
+                  <strong>built-in default</strong> resources that the server ships with.
+                  Equivalent to restarting the server without any externally supplied config.
+                </p>
+                <h2>Request</h2>
+                <table>
+                  <tr><th>Method</th><td><code>DELETE</code></td></tr>
+                  <tr><th>Path</th><td><code>/</code></td></tr>
+                  <tr><th>Body</th><td>None</td></tr>
+                </table>
+                <h2>Response</h2>
+                <table>
+                  <tr><th>204 No Content</th><td>Configuration reset to defaults successfully</td></tr>
+                </table>
+                <h2>Example</h2>
+                <pre>curl -X DELETE http://localhost:8080/</pre>
+                <p>
+                  To load a <em>specific</em> configuration instead of the defaults, use
+                  <a href="/docs/replace"><code>POST /</code></a>.
+                </p>
+                </body>
+                </html>
+
+# ── Generic relation documentation ───────────────────────────────────────────
+# Catch-all for any /docs/<rel> not handled above.
+docs_generic:
+  path:
+    "/docs/[a-zA-Z][a-zA-Z0-9-]*":
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: text/html; charset=utf-8
+          resource: |
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><meta charset="utf-8">
+            <title>MockingHAL — Relation Documentation</title>
+            <style>
+              body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+              a{color:#0055cc}
+              h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+              code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+              .note{background:#fffbdd;border-left:4px solid #e6c000;padding:.6em 1em;margin:1em 0}
+            </style>
+            </head>
+            <body>
+            <p><a href="/docs">← Docs index</a></p>
+            <h1>MockingHAL Link Relation</h1>
+            <div class="note">
+              This URL is the expansion of a <code>mocking:</code> CURI link relation.
+              No dedicated documentation page is registered for this relation.
+            </div>
+            <p>
+              In a production HAL API each CURI-expanded URL serves documentation
+              describing what the linked resource represents, which HTTP methods it
+              supports, and what state transitions it enables.
+            </p>
+            <p>See the <a href="/docs">documentation index</a> for the relations
+            that do have dedicated pages on this server.</p>
+            </body>
+            </html>
+
+# ── HEAD ─────────────────────────────────────────────────────────────────────
+# /docs and /docs/{rel} serve HTML; / serves HAL+JSON.
+
+head_docs:
+  method:
+    HEAD:
+      path:
+        /docs:
+          code: 204
+          headerOut:
+            Content-Type: text/html; charset=utf-8
+
+head_all:
+  method:
+    HEAD:
+      code: 204
+      headerIn:
+        Accept:
+          application/hal\\+yaml:
+            headerOut:
+              Content-Type: application/hal+yaml
+          application/hal\\+xml:
+            headerOut:
+              Content-Type: application/hal+xml
+          \\*:
+            headerOut:
+              Content-Type: application/hal+json
+
+# ── OPTIONS ───────────────────────────────────────────────────────────────────
+# / additionally supports POST (replace config) and PATCH (append config).
+# All other paths (/docs, /docs/{rel}) are GET-only.
+
+options_root:
+  method:
+    OPTIONS:
+      path:
+        /:
+          code: 204
+          headerOut:
+            Allow: GET, POST, PATCH, DELETE, HEAD, OPTIONS
+            Access-Control-Allow-Origin: "*"
+            Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, HEAD, OPTIONS
+            Access-Control-Allow-Headers: Content-Type, Authorization
+
+options_all:
+  method:
+    OPTIONS:
+      code: 204
+      headerOut:
+        Allow: GET, HEAD, OPTIONS
+        Access-Control-Allow-Origin: "*"
+        Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+        Access-Control-Allow-Headers: Content-Type, Authorization

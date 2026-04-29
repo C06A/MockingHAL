@@ -1,0 +1,784 @@
+# =============================================================================
+# MockingHAL default configuration — pedagogical HAL API demo
+#
+# This API demonstrates what HAL adds over plain JSON by walking through
+# progressively richer resource types.  Every link relation is documented
+# at the CURIE-expanded URL  /docs/{rel}.
+#
+# Replace this config at runtime:
+#   curl -X POST http://localhost:8080/ \
+#        -H 'Content-Type: application/yaml' \
+#        --data-binary @your-config.yaml
+# =============================================================================
+
+# ── API root ──────────────────────────────────────────────────────────────────
+# Entry point.  _links navigates to three resource types that together explain
+# HAL.  _embedded shows that even simple scalar-valued objects become first-class
+# resources in HAL.  Properties explain why HAL is worth adopting.
+api_root:
+  path:
+    /:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              self:
+                href: /
+              curies:
+                - name: demo
+                  href: "/docs/{rel}"
+                  templated: true
+              "demo:json":
+                href: /json
+                title: Plain JSON — no _links, no _embedded, no self URL
+              "demo:object":
+                href: /hal/object
+                title: HAL object — has _links to Links and _embedded Embeddeds
+              "demo:array":
+                href: /hal/array
+                title: HAL array — collection of abbreviated HAL resources
+            _embedded:
+              "demo:null":
+                _links:
+                  self:
+                    href: /values/null
+                value: null
+                note: >-
+                  An empty resource.  The self link makes it addressable.
+                  Embedding it here saves a round-trip when the root is fetched.
+              "demo:false":
+                _links:
+                  self:
+                    href: /values/false
+                value: false
+                note: >-
+                  A logical value false resource.  The self link makes it addressable.
+                  Embedding it here saves a round-trip when the root is fetched.
+              "demo:true":
+                _links:
+                  self:
+                    href: /values/true
+                value: true
+                note: >-
+                  A logical value true resource.  The self link makes it addressable.
+                  Embedding it here saves a round-trip when the root is fetched.
+              "demo:number":
+                _links:
+                  self:
+                    href: /values/number
+                value: 42
+                note: >-
+                  A numeric resource.  The self link makes it addressable.
+                  Embedding it here saves a round-trip when the root is fetched.
+              "demo:string":
+                _links:
+                  self:
+                    href: /values/string
+                value: Hello from MockingHAL!
+                note: >-
+                  Even a single string becomes a first-class resource in HAL.
+                  It has its own URL (self) so clients can cache, bookmark,
+                  or re-fetch it independently.
+            title: MockingHAL Demo API
+            description: >-
+              Welcome to MockingHAL.  This API demonstrates HAL
+              (Hypertext Application Language) — a lightweight convention
+              for embedding navigable hyperlinks in JSON responses.
+              Follow the links above to explore different resource types,
+              then use hal.sh to navigate interactively from the terminal.
+            why_hal: >-
+              HAL makes APIs self-describing.  Clients discover available
+              actions by following typed link relations instead of
+              hard-coding URL patterns.  Embedded resources reduce HTTP
+              round-trips.  CURIs expand to human-readable documentation.
+
+# ── Plain JSON resource ───────────────────────────────────────────────────────
+# This endpoint intentionally has no _links and no _embedded.  Its properties
+# explain what that omission costs a client compared with a HAL resource.
+json_resource:
+  path:
+    /json:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/json
+          resource:
+            title: Plain JSON Resource
+            description: >-
+              This resource returns plain JSON.  It has no _links, no
+              _embedded, and no self URL.  Compare it with /hal/object
+              to see what HAL adds.
+            limitation_discovery: >-
+              No discoverability — clients must know all URLs in advance.
+              There is no machine-readable way to find what operations or
+              related resources are available from this document.
+            limitation_relations: >-
+              No typed relations — there is no standard way to express
+              that this resource is related to another.  Clients must
+              hard-code URL patterns or rely on out-of-band documentation.
+            limitation_embedded: >-
+              No embedded sub-resources — every related piece of data
+              requires a separate HTTP round-trip, even when the server
+              already knows which resources clients will need next.
+            limitation_self: >-
+              No self URL — the resource cannot tell clients where it
+              lives.  Caching, bookmarking, and re-fetching require the
+              client to remember the URL from context.
+            limitation_semantics: >-
+              No machine-readable semantics — field names like "title"
+              mean whatever the documentation says.  There is no resolvable
+              URI a client can follow to learn what "title" represents.
+            compare_with: /hal/object
+
+# ── HAL object resource ───────────────────────────────────────────────────────
+# A full HAL object.  _links points to the Links and Embeddeds demonstrations.
+# _embedded contains an abbreviated copy of the Embeddeds resource so clients
+# can inspect it without a second request.  Properties explain each HAL section.
+hal_resources:
+  path:
+    /hal:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          path:
+            /object:
+              resource:
+                _links:
+                  self:
+                    href: /hal/object
+                  curies:
+                    - name: demo
+                      href: "/docs/{rel}"
+                      templated: true
+                  "demo:links":
+                    href: /hal/links
+                    title: Demonstrates every HAL link-object field
+                  "demo:embeddeds":
+                    href: /hal/embeddeds
+                    title: Demonstrates HAL _embedded with nested resources
+                _embedded:
+                  "demo:embeddeds":
+                    _links:
+                      self:
+                        href: /hal/embeddeds
+                      "demo:object":
+                        href: /hal/object
+                    title: HAL Embeddeds (abbreviated)
+                    note: >-
+                      This is a cached copy embedded to save a round-trip.
+                      Follow self to fetch the full Embeddeds resource.
+                title: HAL Object Resource
+                what_are_links: >-
+                  _links is a reserved property whose keys are link relation
+                  types and whose values are link objects.  Each link object
+                  must have an href.  Clients follow links by relation name —
+                  they never construct URLs.  The self relation always points
+                  to this resource's own URL.
+                what_are_embedded: >-
+                  _embedded is a reserved property whose keys match link
+                  relation types in _links.  Values are HAL resources or
+                  arrays of resources, pre-fetched to save round-trips.
+                  Embedded copies may be stale — always follow self for the
+                  authoritative version.
+                what_are_curies: >-
+                  curies (Compact URIs) are declared under the curies key in
+                  _links.  They give link relation keys a human-readable prefix
+                  like "demo:links".  Clients expand "demo:links" by replacing
+                  {rel} in the CURIE href with "links", producing a URL that
+                  serves documentation for that relation.
+
+            /array:
+              resource:
+                - _links:
+                    self:
+                      href: /json
+                  title: Plain JSON
+                  type: json
+                  note: No _links, no _embedded.  Demonstrates what HAL adds.
+                - _links:
+                    self:
+                      href: /hal/object
+                  title: HAL Object
+                  type: hal-object
+                  note: Full HAL resource with _links to Links and _embedded Embeddeds.
+                - _links:
+                    self:
+                      href: /hal/array
+                  title: HAL Array
+                  type: hal-array
+                  note: This document — a top-level array of abbreviated HAL resources.
+                - _links:
+                    self:
+                      href: /hal/links
+                  title: HAL Links
+                  type: hal-links
+                  note: Demonstrates every HAL link-object field (href, templated, type, …).
+                - _links:
+                    self:
+                      href: /hal/embeddeds
+                  title: HAL Embeddeds
+                  type: hal-embeddeds
+                  note: Demonstrates _embedded with a nested HAL object and an array.
+            /links:
+              resource:
+                _links:
+                  self:
+                    href: /hal/links
+                  curies:
+                    - name: demo
+                      href: "/docs/{rel}"
+                      templated: true
+                  "demo:simple":
+                    href: /hal/object
+                    title: Simple link — only href is required
+                  "demo:templated":
+                    href: "/hal/items/{id}"
+                    templated: true
+                    title: Templated link — expand {id} with an integer before use (RFC 6570)
+                  "demo:typed":
+                    href: /hal/object
+                    type: application/hal+json
+                    title: Link with media-type hint — clients know the response format in advance
+                  "demo:hreflang":
+                    href: /docs/links
+                    hreflang: en
+                    title: Link with BCP 47 language tag
+                  "demo:named":
+                    - href: /hal/object
+                      name: object
+                      title: Named link — object variant (name distinguishes among siblings)
+                    - href: /hal/array
+                      name: array
+                      title: Named link — array variant
+                  "demo:deprecated":
+                    href: /old/endpoint
+                    deprecation: /docs/deprecated
+                    title: Deprecated link — presence of "deprecation" signals clients to migrate
+                title: HAL Links Demonstration
+                explanation: >-
+                  Every key in _links is a link relation type.  Its value is
+                  either a single link object or an array of link objects.
+                  The only required field in a link object is href.  All other
+                  fields are optional hints that clients may use.
+                field_href: >-
+                  href — target URI, or a URI Template (RFC 6570) when
+                  templated is true.  Clients must expand templates before use.
+                field_templated: >-
+                  templated — boolean.  When true, href contains variable
+                  expressions like {id} or {?q,page} that must be expanded.
+                field_type: >-
+                  type — media-type hint for the target resource.  Clients
+                  may use this to decide whether to follow the link.
+                field_name: >-
+                  name — secondary key used when multiple links share the same
+                  relation type.  Clients select a specific link by name.
+                field_title: >-
+                  title — human-readable label.  Useful for building menus
+                  and help text; not intended for programmatic use.
+                field_hreflang: >-
+                  hreflang — BCP 47 language tag for the target resource.
+                  Use it to offer the same content in multiple languages.
+                field_deprecation: >-
+                  deprecation — URI pointing to a deprecation notice.
+                  The mere presence of this field signals the link is deprecated.
+
+
+            /embeddeds:
+              resource:
+                _links:
+                  self:
+                    href: /hal/embeddeds
+                  curies:
+                    - name: demo
+                      href: "/docs/{rel}"
+                      templated: true
+                  "demo:object":
+                    href: /hal/object
+                    title: Full HAL object resource
+                  "demo:items":
+                    href: /hal/array
+                    title: Full HAL array resource
+                _embedded:
+                  "demo:object":
+                    _links:
+                      self:
+                        href: /hal/object
+                      curies:
+                        - name: demo
+                          href: "/docs/{rel}"
+                          templated: true
+                      "demo:links":
+                        href: /hal/links
+                      "demo:embeddeds":
+                        href: /hal/embeddeds
+                    title: HAL Object (abbreviated embedded copy)
+                    note: >-
+                      Follow self for the full resource.  This copy was
+                      embedded to save a round-trip when fetching /hal/embeddeds.
+                  "demo:items":
+                    - _links:
+                        self:
+                          href: /json
+                      title: Plain JSON
+                      type: json
+                    - _links:
+                        self:
+                          href: /hal/object
+                      title: HAL Object
+                      type: hal-object
+                title: HAL Embeddeds Demonstration
+                explanation: >-
+                  _embedded pre-fetches copies of related resources.  Keys
+                  match link relation types declared in _links.  Values are
+                  HAL resources or arrays of resources.
+                caching_note: >-
+                  Embedded copies are snapshots taken when this resource was
+                  generated.  They may be stale.  Always follow the self link
+                  for the authoritative, up-to-date version of a resource.
+                round_trip_benefit: >-
+                  Without _embedded, a client fetching this list would need one
+                  HTTP request per item.  Embedding reduces that to a single
+                  request — the server decides which resources are worth
+                  pre-fetching based on typical access patterns.
+
+
+# ── Scalar value resources ────────────────────────────────────────────────────
+# Addressable endpoints for the scalar values embedded at the API root.
+# Demonstrates that even simple scalars become first-class HAL resources.
+scalar_values:
+  path:
+    /values:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          path:
+            /null:
+              code: 204
+            /false:
+              resource:
+                false
+            /true:
+              resource:
+                true
+            /string:
+              resource:
+                Hello from MockingHAL!
+            /number:
+              resource:
+                42
+
+# ── Deprecated old endpoint ───────────────────────────────────────────────────
+# Referenced by the demo:deprecated link in /hal/links.
+# Returns 410 Gone with a pointer to the deprecation notice at /docs/deprecated.
+old_endpoint:
+  path:
+    /old/endpoint:
+      method:
+        GET:
+          code: 410
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              self:
+                href: /old/endpoint
+              curies:
+                - name: demo
+                  href: "/docs/{rel}"
+                  templated: true
+              "demo:deprecated":
+                href: /docs/deprecated
+                title: Migration guide for this deprecated endpoint
+            title: Gone
+            message: >-
+              This endpoint has been removed.  It exists in the demo only to
+              illustrate the HAL deprecation link field.  The deprecation URI
+              in _links points to migration documentation.
+            migrate_to: /hal/object
+
+# ── Documentation pages ───────────────────────────────────────────────────────
+# Served at /docs/{rel} — the CURIE-expanded URL for each "demo:" relation.
+# The index at /docs lists all resources.  Each sub-page explains one relation.
+docs:
+  path:
+    /docs:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: text/html; charset=utf-8
+          path:
+            "":
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>MockingHAL — HAL Demo API Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+                  ul{padding-left:1.6em}li{margin:.3em 0}
+                  .note{background:#fffbdd;border-left:4px solid #e6c000;padding:.6em 1em;margin:1em 0}
+                </style>
+                </head>
+                <body>
+                <h1>MockingHAL — HAL Demo API</h1>
+                <div class="note">
+                  This server demonstrates <strong>HAL (Hypertext Application Language)</strong> —
+                  a lightweight convention for embedding navigable hyperlinks in JSON responses.
+                </div>
+                <h2>Resource types</h2>
+                <ul>
+                  <li><a href="/"><code>GET /</code></a> — API root (start here)</li>
+                  <li><a href="/json"><code>GET /json</code></a>
+                    — <a href="/docs/json">Plain JSON</a>: no <code>_links</code>, no <code>_embedded</code></li>
+                  <li><a href="/hal/object"><code>GET /hal/object</code></a>
+                    — <a href="/docs/hal-object">HAL object</a>: links to Links and embedded Embeddeds</li>
+                  <li><a href="/hal/array"><code>GET /hal/array</code></a>
+                    — <a href="/docs/hal-array">HAL array</a>: collection of abbreviated resources</li>
+                  <li><a href="/hal/links"><code>GET /hal/links</code></a>
+                    — <a href="/docs/links">HAL links</a>: every link-object field demonstrated</li>
+                  <li><a href="/hal/embeddeds"><code>GET /hal/embeddeds</code></a>
+                    — <a href="/docs/embeddeds">HAL embeddeds</a>: nested and array embedded resources</li>
+                </ul>
+                <h2>HAL concepts</h2>
+                <ul>
+                  <li><code>_links</code> — typed hyperlinks; clients follow relations, not URLs</li>
+                  <li><code>_embedded</code> — pre-fetched sub-resources; reduces round-trips</li>
+                  <li><strong>CURIs</strong> — compact URI prefixes that expand to documentation URLs</li>
+                  <li><strong>URI Templates (RFC 6570)</strong> — parameterised links like <code>/items/{id}</code></li>
+                </ul>
+                <h2>Replace this config</h2>
+                <pre style="background:#f0f0f0;padding:1em;overflow-x:auto">curl -X POST http://localhost:8080/ \
+                  -H 'Content-Type: application/yaml' \
+                  --data-binary @my-api.yaml</pre>
+                </body>
+                </html>
+            /json:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>demo:json — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>demo:json</code></h1>
+                <p>
+                  Links to <a href="/json"><code>GET /json</code></a> — a plain JSON resource
+                  with no HAL extensions.  Its purpose is to show what clients lose when an API
+                  returns plain JSON instead of HAL.
+                </p>
+                <h2>What plain JSON is missing</h2>
+                <ul>
+                  <li><strong>No discoverability</strong> — clients must know all URLs in advance.</li>
+                  <li><strong>No typed relations</strong> — no machine-readable links to related resources.</li>
+                  <li><strong>No embedded sub-resources</strong> — every related piece of data costs a round-trip.</li>
+                  <li><strong>No self URL</strong> — the resource cannot tell clients where it lives.</li>
+                  <li><strong>No machine-readable semantics</strong> — field meanings must be documented out-of-band.</li>
+                </ul>
+                <p>Compare with <a href="/hal/object"><code>GET /hal/object</code></a>.</p>
+                </body>
+                </html>
+            /object:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>demo:hal-object — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>demo:hal-object</code></h1>
+                <p>
+                  Links to <a href="/hal/object"><code>GET /hal/object</code></a> — a full HAL
+                  object resource that demonstrates both <code>_links</code> and
+                  <code>_embedded</code>.
+                </p>
+                <h2>What this resource demonstrates</h2>
+                <ul>
+                  <li><strong><code>_links</code></strong> — typed hyperlinks to the
+                    <a href="/hal/links">Links</a> and <a href="/hal/embeddeds">Embeddeds</a>
+                    demonstrations.</li>
+                  <li><strong><code>_embedded</code></strong> — an abbreviated copy of the
+                    Embeddeds resource pre-fetched to save a round-trip.</li>
+                  <li><strong>CURIs</strong> — the <code>demo</code> prefix expands to these
+                    documentation pages, making every link relation self-documenting.</li>
+                </ul>
+                <h2>How <code>_links</code> works</h2>
+                <p>
+                  Each key in <code>_links</code> is a link relation type.  Clients follow
+                  links by relation name — they never construct URLs.  The
+                  <code>self</code> relation always points to the resource's own URL.
+                </p>
+                <h2>How <code>_embedded</code> works</h2>
+                <p>
+                  <code>_embedded</code> keys mirror link relation types in <code>_links</code>.
+                  Values are HAL resources or arrays of resources pre-fetched by the server.
+                  Embedded copies may be stale — follow <code>self</code> for the live version.
+                </p>
+                </body>
+                </html>
+            /array:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>demo:hal-array — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                  pre{background:#f0f0f0;padding:1em;overflow-x:auto}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>demo:hal-array</code></h1>
+                <p>
+                  Links to <a href="/hal/array"><code>GET /hal/array</code></a> — a top-level
+                  JSON array of abbreviated HAL resources, one for each resource type in this API.
+                </p>
+                <h2>What this resource demonstrates</h2>
+                <ul>
+                  <li>A collection can be a plain JSON array of HAL-like objects.</li>
+                  <li>Each item has a <code>self</code> link so clients can fetch the full resource.</li>
+                  <li>Abbreviated items reduce payload size; clients follow <code>self</code> when they need more detail.</li>
+                </ul>
+                <h2>Items in this collection</h2>
+                <ul>
+                  <li><a href="/json">Plain JSON</a> — no <code>_links</code>, no <code>_embedded</code></li>
+                  <li><a href="/hal/object">HAL Object</a> — links + embedded</li>
+                  <li><a href="/hal/array">HAL Array</a> — this document</li>
+                  <li><a href="/hal/links">HAL Links</a> — all link-object fields</li>
+                  <li><a href="/hal/embeddeds">HAL Embeddeds</a> — nested and array embeds</li>
+                </ul>
+                </body>
+                </html>
+            /links:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>demo:links — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+                  table{border-collapse:collapse;width:100%;margin:1em 0}
+                  th,td{border:1px solid #ccc;padding:.45em .8em;text-align:left}
+                  th{background:#e8e8e8}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>demo:links</code></h1>
+                <p>
+                  Links to <a href="/hal/links"><code>GET /hal/links</code></a> — a HAL resource
+                  that demonstrates every field a link object can have.
+                </p>
+                <h2>Link object fields</h2>
+                <table>
+                  <tr><th>Field</th><th>Type</th><th>Required</th><th>Purpose</th></tr>
+                  <tr><td><code>href</code></td><td>string</td><td>yes</td>
+                      <td>Target URI or URI Template (RFC 6570)</td></tr>
+                  <tr><td><code>templated</code></td><td>boolean</td><td>no</td>
+                      <td>If true, href is a URI Template — expand before use</td></tr>
+                  <tr><td><code>type</code></td><td>string</td><td>no</td>
+                      <td>Media-type hint for the target resource</td></tr>
+                  <tr><td><code>name</code></td><td>string</td><td>no</td>
+                      <td>Secondary key when multiple links share a relation type</td></tr>
+                  <tr><td><code>title</code></td><td>string</td><td>no</td>
+                      <td>Human-readable label (for display, not logic)</td></tr>
+                  <tr><td><code>hreflang</code></td><td>string</td><td>no</td>
+                      <td>BCP 47 language tag for the target resource</td></tr>
+                  <tr><td><code>deprecation</code></td><td>URI</td><td>no</td>
+                      <td>Presence signals the link is deprecated; value is a notice URL</td></tr>
+                </table>
+                <h2>Link types demonstrated</h2>
+                <ul>
+                  <li><strong>Simple</strong> — only <code>href</code> present</li>
+                  <li><strong>Templated</strong> — <code>href</code> contains <code>{id}</code>, <code>templated: true</code></li>
+                  <li><strong>Typed</strong> — <code>type: application/hal+json</code> hint</li>
+                  <li><strong>Language-tagged</strong> — <code>hreflang: en</code></li>
+                  <li><strong>Named array</strong> — same relation key, two entries distinguished by <code>name</code></li>
+                  <li><strong>Deprecated</strong> — <code>deprecation</code> URI present</li>
+                </ul>
+                <p>See the live resource: <a href="/hal/links"><code>GET /hal/links</code></a></p>
+                </body>
+                </html>
+            /embeddeds:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>demo:embeddeds — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+                  ul{padding-left:1.6em}li{margin:.4em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Relation: <code>demo:embeddeds</code></h1>
+                <p>
+                  Links to <a href="/hal/embeddeds"><code>GET /hal/embeddeds</code></a> — a HAL
+                  resource that demonstrates <code>_embedded</code> with two entry types:
+                  a single embedded object and an array of embedded objects.
+                </p>
+                <h2>How <code>_embedded</code> works</h2>
+                <ul>
+                  <li>Keys in <code>_embedded</code> are link relation types that also appear in <code>_links</code>.</li>
+                  <li>Values are HAL resources (objects) or arrays of HAL resources.</li>
+                  <li>Each embedded resource should have its own <code>self</code> link.</li>
+                  <li>Embedded copies are snapshots — follow <code>self</code> for the live version.</li>
+                </ul>
+                <h2>Entries in this resource</h2>
+                <ul>
+                  <li><strong><code>demo:hal-object</code></strong> — a single embedded HAL object
+                    (abbreviated copy of <a href="/hal/object">/hal/object</a>)</li>
+                  <li><strong><code>demo:items</code></strong> — an array of abbreviated resources
+                    drawn from <a href="/hal/array">/hal/array</a></li>
+                </ul>
+                <h2>Why embed?</h2>
+                <p>
+                  Embedding lets the server pre-fetch resources it knows the client will need next,
+                  bundling them into a single HTTP response.  Clients that do not need the embedded
+                  data can ignore <code>_embedded</code> entirely.
+                </p>
+                </body>
+                </html>
+
+# ── Generic relation documentation ───────────────────────────────────────────
+# Catches any /docs/<rel> URL not handled above (e.g. demo:string-value,
+# demo:number-value, or any custom relation added to this config).
+docs_generic:
+  path:
+    "/docs/[a-zA-Z][a-zA-Z0-9-]*":
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: text/html; charset=utf-8
+          resource: |
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><meta charset="utf-8">
+            <title>HAL Relation — MockingHAL Docs</title>
+            <style>
+              body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+              a{color:#0055cc}
+              h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+              code{background:#f0f0f0;padding:.15em .4em;border-radius:3px;font-size:.95em}
+              .note{background:#fffbdd;border-left:4px solid #e6c000;padding:.6em 1em;margin:1em 0}
+            </style>
+            </head>
+            <body>
+            <p><a href="/docs">← Docs index</a></p>
+            <h1>HAL Link Relation</h1>
+            <div class="note">
+              This URL is the expansion of a <code>demo:</code> CURIE link relation.
+              No specific documentation page is registered for this relation on this server.
+            </div>
+            <p>
+              In a production HAL API, every CURIE-expanded URL would serve documentation
+              describing the link relation: what the linked resource represents, what HTTP
+              methods it supports, and what state transitions it enables.
+            </p>
+            <p>
+              See <a href="/docs">the docs index</a> for the relations that do have
+              dedicated pages on this demo server.
+            </p>
+            </body>
+            </html>
+
+# ── HEAD ─────────────────────────────────────────────────────────────────────
+# /docs and /docs/{rel} serve HTML; /json serves plain JSON; all others serve HAL+JSON.
+
+head_docs:
+  method:
+    HEAD:
+      path:
+        /docs:
+          code: 200
+          headerOut:
+            Content-Type: text/html; charset=utf-8
+
+head_json:
+  method:
+    HEAD:
+      path:
+        /json:
+          code: 200
+          headerOut:
+            Content-Type: application/json
+
+head_all:
+  method:
+    HEAD:
+      code: 200
+      headerOut:
+        Content-Type: application/hal+json
+
+# ── OPTIONS ───────────────────────────────────────────────────────────────────
+# / additionally supports POST (replace config) and PATCH (append config).
+# All other paths are GET-only.
+
+options_root:
+  method:
+    OPTIONS:
+      path:
+        /:
+          code: 204
+          headerOut:
+            Allow: GET, POST, PATCH, HEAD, OPTIONS
+            Access-Control-Allow-Origin: "*"
+            Access-Control-Allow-Methods: GET, POST, PATCH, HEAD, OPTIONS
+            Access-Control-Allow-Headers: Content-Type, Authorization
+
+options_all:
+  method:
+    OPTIONS:
+      code: 204
+      headerOut:
+        Allow: GET, HEAD, OPTIONS
+        Access-Control-Allow-Origin: "*"
+        Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+        Access-Control-Allow-Headers: Content-Type, Authorization

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find ~/.gradle/caches/modules-2/files-2.1/io.ktor -name *.jar)",
+      "Bash(xargs ls:*)",
+      "Bash(jar tf:*)",
+      "Bash(find ~/.gradle/caches/modules-2/files-2.1 -name kotlinx-io-core-jvm-*.jar)",
+      "Bash(./gradlew :scripts:test 2>&1)",
+      "Bash(wc:*)",
+      "Bash(SCRIPTS_DIR=scripts/src/main/bash scripts/build/bats/bin/bats -f \"interactive: print resource then exit\" scripts/src/test/bats/hal.bats)",
+      "Bash(scripts/src/test/bats.sh hal *)",
+      "Bash(./gradlew :mockinghal:compileKotlin)"
+    ]
+  }
+}

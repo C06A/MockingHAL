@@ -1,0 +1,483 @@
+= MockingHAL
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+
+MockingHAL is a standalone mock HTTP server that serves
+https://stateless.group/hal_specification.html[HAL (Hypertext Application Language)]
+resources from YAML or JSON configuration files.
+It is aimed at developers who need a realistic HAL API for prototyping or
+integration testing without running a real backend — point it at a config file,
+hit `POST /` and your mock endpoints are live in milliseconds.
+Out of the box it starts with a self-describing documentation API that describes
+its own entry points and configuration format.
+
+== Obtaining the artifact
+
+Pre-built fat JARs are published to Maven Central under the coordinates
+`com.helpchoice:mockinghal`.
+Download the latest `mockinghal-<version>-all.jar` directly from Maven Central
+or retrieve it with any compatible build tool.
+
+== Installation and running
+
+MockingHAL requires Java 21 or later.
+
+[source,bash]
+----
+java -jar mockinghal-<version>-all.jar
+----
+
+The server starts on port **8080** and loads the built-in default configuration
+automatically from two classpath files:
+`default/config.yaml` (MockingHAL self-description) and `default/config-docs.json`
+(configuration guide).
+Visit http://localhost:8080/ to browse the self-describing HAL root.
+
+== Configuration format
+
+MockingHAL configuration is a YAML (or JSON) document that describes a tree of
+matching rules.
+Each top-level key is an arbitrary label that identifies a *root node*.
+Roots are tried in document order; the first root that produces a full match
+wins.
+
+[source,yaml]
+----
+my_root:           # arbitrary label — used for identification only
+  method:          # filter: HTTP method
+    GET:
+      path:        # filter: URL path prefix
+        /hello:
+          code: 200
+          headerOut:
+            Content-Type: application/json
+          resource:
+            message: Hello from MockingHAL!
+----
+
+=== Tree node fields
+
+Every node in the tree may carry any combination of filter fields and response
+fields.
+Filters constrain which requests traverse deeper; response fields accumulate
+as the tree is walked from root toward a leaf.
+
+==== Filter fields
+
+[cols="1,2,5", options="header"]
+|===
+| Field | Type | Semantics
+
+| `method`
+| `Map<String, TreeNode>`
+| Dispatches on HTTP method name (`GET`, `POST`, `DELETE`, …).
+  *Strict*: returns 404 when the request method matches none of the keys.
+
+| `path`
+| `Map<String, TreeNode>`
+| Matches the remaining URL path against each key as a **regex prefix** anchored
+  at a segment boundary.
+  The matched prefix is stripped before recursing into the child node.
+  An empty-string key (`""`) matches when no path segment remains.
+  *Strict*: returns 404 when no key matches.
+
+| `query`
+| `Map<String, TreeNode>`
+| Matches the raw query string by **containment** (the pattern need not cover the
+  whole string).
+  An empty-string key matches when the query string is empty.
+  *Selector* (optional): falls through to the current node's own response when no
+  key matches.
+
+| `headerIn`
+| `Map<String, Map<String, TreeNode>>`
+| Outer key: request header name (case-insensitive).
+  Inner keys: regex patterns tried against the header value in order; the first
+  match wins (OR within a header).
+  Nest another `headerIn` inside a child to require a second header (AND).
+  *Selector* (optional): falls through when no pattern matches.
+
+| `body`
+| `Map<String, TreeNode>`
+| Matches the request body by **containment**.
+  *Selector* (optional): falls through when no key matches.
+|===
+
+**Strict** filters (`method`, `path`) cause the root to return 404 immediately
+when the request does not satisfy them.
+**Selector** filters (`query`, `headerIn`, `body`) are optional: when no key
+matches, the current node's own response elements are used instead.
+
+==== Response fields
+
+Response fields accumulate as the tree is traversed.
+A child node's values override those of its ancestors; `headerOut` maps are
+merged (child entries override parent entries with the same header name).
+
+[cols="1,2,5", options="header"]
+|===
+| Field | Type | Semantics
+
+| `code`
+| `Int`
+| HTTP status code. Defaults to `200` when not set anywhere on the matched path.
+
+| `resource`
+| Any YAML value
+| Response body.
+  String values are sent verbatim.
+  Maps and lists are serialised to JSON.
+  A `null` value produces an empty body (combine with `code: 204` for
+*204 (No Content)*.
+
+| `headerOut`
+| `Map<String, String>`
+| Response headers.
+  Merged from every node along the matched path; later nodes override earlier
+  ones for the same header name.
+  Defaults to `Content-Type: application/json` when no `Content-Type` is set.
+|===
+
+== Request matching
+
+When a request arrives MockingHAL:
+
+. Iterates the loaded root nodes in *insertion order*.
+. For each root, recursively evaluates the filter tree:
+  * Filters are AND-combined in a fixed evaluation order:
+    `method` → `path` → `query` → `headerIn` → `body`.
+  * A `path` match strips the matched prefix and recurses with the shortened path.
+  * Response fields (`code`, `resource`, `headerOut`) accumulate from root to leaf;
+    deeper nodes override shallower ones.
+. Returns the accumulated response from the **first** root that matches completely.
+. Returns `404` with a JSON error body when no root matches.
+
+Regex patterns for `path` are always **prefix** patterns: the pattern is matched
+against the start of the remaining path with an implicit segment-boundary anchor.
+This means `/hal` matches `/hal`, `/hal/object`, and `/hal/array`, but not
+`/halide`.
+
+== Runtime configuration management
+
+The server exposes three endpoints for managing the loaded configuration at
+runtime.
+
+[cols="1,1,2,3", options="header"]
+|===
+| Method | Path | Accepted body | Effect
+
+| `POST`
+| `/`
+| YAML, JSON, `multipart/form-data`, or `multipart/mixed`
+| **Replace** the entire configuration.
+  Returns `201 Created` on success, `400 Bad Request` if the body cannot be
+  parsed.
+
+| `PATCH`
+| `/`
+| YAML, JSON, `multipart/form-data`, or `multipart/mixed`
+| **Merge** into the current configuration.
+  Top-level keys in the new document override existing roots with the same name;
+  all other roots are preserved.
+  Returns `200 OK` on success.
+
+| `DELETE`
+| `/`
+| —
+| **Reset** to the built-in defaults.
+  Returns `204 No Content`.
+|===
+
+When a multipart body is supplied, each part is parsed and merged in order into
+a single resource map before being applied.
+Regex patterns in `path`, `query`, `body`, and `headerIn` are validated eagerly
+at parse time; an invalid pattern causes the whole request to be rejected with
+`400 Bad Request`.
+
+=== Loading a configuration file
+
+[source,bash]
+----
+# Replace everything
+curl -X POST http://localhost:8080/ \
+     -H 'Content-Type: application/yaml' \
+     --data-binary @my-api.yaml
+
+# Append without removing existing roots
+curl -X PATCH http://localhost:8080/ \
+     -H 'Content-Type: application/yaml' \
+     --data-binary @extra-endpoints.yaml
+
+# Reset to built-in defaults
+curl -X DELETE http://localhost:8080/
+----
+
+== Examples
+
+=== Minimal JSON response
+
+------
+plain_json:
+  path:
+    /greet:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/json
+          resource:
+            message: Hello!
+------
+
+`GET /greet` returns `{"message":"Hello!"}` with status 200.
+
+=== HAL object with `_links` and `_embedded`
+
+------
+hal_resource:
+  path:
+    /items:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              self:
+                href: /items
+              item:
+                href: /items/1
+                title: First item
+            _embedded:
+              item:
+                _links:
+                  self:
+                    href: /items/1
+                name: Widget
+            total: 1
+------
+
+=== HAL array (collection resource)
+
+------
+items_list:
+  path:
+    /items:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            - _links:
+                self:
+                  href: /items/1
+              name: Widget
+            - _links:
+                self:
+                  href: /items/2
+              name: Gadget
+------
+
+=== 204 No Content (null resource)
+
+------
+empty_resource:
+  path:
+    /values/null:
+      method:
+        GET:
+          code: 204
+------
+
+Setting only `code: 204` (no `resource`) produces an empty response body.
+
+=== Content negotiation with `headerIn`
+
+------
+api_root:
+  path:
+    /:
+      method:
+        GET:
+          code: 200
+          # Default response (no Accept header or unrecognised value)
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              self:
+                href: /
+          headerIn:
+            accept:
+              "application/hal\\+xml":
+                headerOut:
+                  Content-Type: application/hal+xml
+                resource: "<root><link rel='self' href='/'/></root>"
+              "application/hal\\+yaml":
+                headerOut:
+                  Content-Type: application/hal+yaml
+                resource: |
+                  _links:
+                    self:
+                      href: /
+------
+
+The `headerIn` `accept` selector is tried first; if neither pattern matches the
+`Accept` header, the parent node's `resource` and `headerOut` are used.
+
+=== Nested `path` matching
+
+`path` keys are regex prefixes.
+Use nesting to share response headers across a path subtree:
+
+------
+hal_subtree:
+  path:
+    /hal:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json  # inherited by all /hal/* children
+          path:
+            /object:
+              resource:
+                _links:
+                  self:
+                    href: /hal/object
+            /array:
+              resource:
+                - _links:
+                    self:
+                      href: /hal/array
+------
+
+Both `GET /hal/object` and `GET /hal/array` inherit
+`Content-Type: application/hal+json` from the `/hal` node.
+
+== Built-in documentation
+
+MockingHAL ships with two default configuration files that are loaded from the
+classpath at startup and restored by `DELETE /`.
+
+=== MockingHAL self-description (`default/config.yaml`)
+
+`GET /` returns a HAL+JSON resource that describes MockingHAL itself — its entry
+points, accepted content types, and configuration format.
+Content negotiation via the `Accept` header serves the same information as
+HAL+XML or HAL+YAML.
+Link relations use the `mocking:` CURIE prefix, each expanding to a documentation
+page under `/docs/`.
+
+[cols="1,3", options="header"]
+|===
+| Endpoint | Description
+
+| `GET /`
+| HAL+JSON root (content negotiation: HAL+XML, HAL+YAML via `Accept`)
+
+| `GET /docs` (or `GET /docs/`)
+| HTML documentation index
+
+| `GET /docs/hal`
+| Documentation for the `mocking:hal` relation — the HAL+JSON root
+
+| `GET /docs/xml`
+| Documentation for the `mocking:xml` relation — HAL+XML representation
+
+| `GET /docs/yaml`
+| Documentation for the `mocking:yaml` relation — HAL+YAML representation
+
+| `GET /docs/replace`
+| Documentation for `POST /` — replace the loaded configuration
+
+| `GET /docs/append`
+| Documentation for `PATCH /` — append to the loaded configuration
+
+| `GET /docs/reset`
+| Documentation for `DELETE /` — reset to built-in defaults
+|===
+
+=== Configuration guide (`default/config-docs.json`)
+
+A multi-page HTML guide to writing MockingHAL configuration files, served
+entirely within the running server.
+
+[cols="1,3", options="header"]
+|===
+| Endpoint | Description
+
+| `GET /docs/config`
+| Configuration guide index with a quick-reference TreeNode field table
+
+| `GET /docs/config/structure`
+| Document format, top-level labels, TreeNode anatomy, and the loading API
+
+| `GET /docs/config/routing`
+| `method` and `path` — strict filters that route or reject
+
+| `GET /docs/config/selectors`
+| `query`, `headerIn`, `body` — optional response selectors
+
+| `GET /docs/config/response`
+| `code`, `resource`, `headerOut` — how responses are built and accumulated
+
+| `GET /docs/config/combining`
+| AND semantics, child chaining, multiple filter types at one node
+
+| `GET /docs/config/yaml-tips`
+| Anchors, quoting regex metacharacters, multiline string styles
+
+| `GET /docs/config/examples`
+| Complete worked configurations (CRUD, content negotiation, query variants, error simulation, body conditions)
+
+| `GET /docs/config/load`
+| Interactive browser form to submit or append a configuration to the running server
+|===
+
+=== HAL demo
+
+An example configuration demonstrating HAL concepts is provided at
+`mockinghal/src/test/resources/haldish/hal_demo.yaml`.
+Load it at runtime to explore progressive HAL resource types:
+
+[source,bash]
+----
+curl -X POST http://localhost:8080/ \
+     -H 'Content-Type: application/yaml' \
+     --data-binary @mockinghal/src/test/resources/haldish/hal_demo.yaml
+----
+
+== Build from source
+
+[source,bash]
+----
+./gradlew :mockinghal:shadowJar
+----
+
+The fat JAR is written to `mockinghal/build/libs/mockinghal-<version>-all.jar`.
+
+=== Running the integration tests
+
+The integration tests require the HALDiSh CLI to be extracted first:
+
+[source,bash]
+----
+./gradlew :mockinghal:setup
+----
+
+Then start the server in one terminal and run the test scripts in another:
+
+[source,bash]
+----
+# terminal 1
+java -jar mockinghal/build/libs/mockinghal-*-all.jar
+
+# terminal 2
+bash mockinghal/src/test/bash/haldish.sh
+bash mockinghal/src/test/bash/mockinghal.sh
+----
