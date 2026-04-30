@@ -3,6 +3,7 @@ val haldish: Configuration by configurations.creating
 plugins {
     kotlin("jvm")
     application
+    war
     id("com.gradleup.shadow")
     `maven-publish`
     signing
@@ -21,9 +22,11 @@ repositories {
 dependencies {
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
+    implementation("io.ktor:ktor-server-servlet-jakarta:$ktorVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("ch.qos.logback:logback-classic:1.5.12")
+    compileOnly("jakarta.servlet:jakarta.servlet-api:6.0.0")
     haldish("com.helpchoice:haldish:2.2.4@run")
 }
 
