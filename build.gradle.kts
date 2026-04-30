@@ -2,8 +2,10 @@ plugins {
     kotlin("jvm")
 }
 
-group = "com.helpchoice.kotlin.hal"
-version = "1.0.0"
+allprojects {
+    group   = "com.helpchoice.kotlin.hal"
+    version = "1.0.0"
+}
 
 repositories {
     mavenCentral()
@@ -20,3 +22,4 @@ tasks.test {
 kotlin {
     jvmToolchain(17)
 }
+
