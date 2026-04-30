@@ -97,6 +97,7 @@ publishing {
             artifactId = "mockinghal"
 
             artifact(tasks.named("shadowJar"))
+            artifact(tasks.named("war"))
 
             pom {
                 name.set("mockinghal")
