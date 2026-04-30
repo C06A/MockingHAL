@@ -7,6 +7,7 @@ plugins {
     id("com.gradleup.shadow")
     `maven-publish`
     signing
+    id("com.gradleup.nmcp")
 }
 
 // ─── dependencies ──────────────────────────────────────────────────────────────
@@ -139,4 +140,31 @@ signing {
         useInMemoryPgpKeys(file(keyFile).readText(), password)
         sign(publishing.publications["app"])
     }
+}
+
+// ─── Maven Central publishing (new Central Portal) ───────────────────────────
+// Uses central.sonatype.com/api/v1/publisher/upload — works for new portal accounts.
+// Credentials: mavenCentralUsername / mavenCentralPassword in gradle.properties
+//              or env vars MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD.
+//              Generate tokens at central.sonatype.com → Account → Generate User Token.
+// publicationType = "USER_MANAGED"  → appears in portal for manual review before release
+// publicationType = "AUTOMATIC"     → released to Central immediately after validation
+nmcp {
+    publish("app") {
+        username.set(
+            providers.gradleProperty("mavenCentralUsername")
+                .orElse(providers.environmentVariable("MAVEN_CENTRAL_USERNAME"))
+        )
+        password.set(
+            providers.gradleProperty("mavenCentralPassword")
+                .orElse(providers.environmentVariable("MAVEN_CENTRAL_PASSWORD"))
+        )
+        publicationType = "USER_MANAGED"
+    }
+}
+
+// nmcp tasks have no group by default — assign them so they appear in the standard task list
+afterEvaluate {
+    tasks.named("publishAllPublicationsToCentralPortal") { group = "publishing" }
+    tasks.named("publishAppPublicationToCentralPortal")  { group = "publishing" }
 }
