@@ -53,6 +53,28 @@ val publishedGroup: String = providers.gradleProperty("mavenCentralNamespace")
     .orElse(providers.environmentVariable("MAVEN_CENTRAL_NAMESPACE"))
     .orElse(project.group.toString()).get()
 
+tasks.register("checkPort") {
+    group = "application"
+    description = "Show which process is holding port 8080"
+    doLast {
+        val port = 8080
+        val os = System.getProperty("os.name").lowercase()
+        val (cmd, args) = if ("win" in os)
+            "netstat" to listOf("-ano", "-p", "TCP")
+        else
+            "lsof"   to listOf("-i", ":$port", "-P", "-n")
+        val result = ProcessBuilder(cmd, *args.toTypedArray())
+            .redirectErrorStream(true)
+            .start()
+            .inputStream.bufferedReader().readText()
+        val output = if ("win" in os)
+            result.lines().filter { ":$port " in it }.joinToString("\n")
+        else
+            result
+        println(if (output.isBlank()) "Nothing is holding port $port." else output)
+    }
+}
+
 tasks.register("setup") {
     group = "build"
     dependsOn(haldish)
