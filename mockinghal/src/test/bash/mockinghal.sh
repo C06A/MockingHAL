@@ -25,7 +25,7 @@ GET $ROOT_URL \
   | rename.sh root \
   | cleanup.sh -- body curl status code \
   | prettyprint.sh >/dev/null
-(( "$(cat root.code)" == "200" )) || (hal::log::error "Fail to get Root resource"; exit 100)
+(( "$(cat root.code)" == "200" )) || (hal::log::error "Fail to get Root resource with status $(cat root.status)"; exit 100)
 hal::log::ok "Got Root resource"
 
 (export HTTP_IN_HEADERS="Accept:$(hal.sh root.json links mocking:hal type)"; \
@@ -34,7 +34,7 @@ hal::log::ok "Got Root resource"
   | cleanup.sh -- body curl status code \
   | prettyprint.sh >/dev/null
 )
-(( "$(cat root-hal+json.code)" == "200" )) || (hal::log::error "Fail to get Root HAL resource"; exit 110)
+(( "$(cat root-hal+json.code)" == "200" )) || (hal::log::error "Fail to get Root HAL resource with status $(cat root-hal+json.status)"; exit 110)
 hal::log::ok "Got Root HAL resource"
 
 (export HTTP_IN_HEADERS="Accept:$(hal.sh root.json links mocking:xml type)"; \
@@ -43,7 +43,7 @@ hal::log::ok "Got Root HAL resource"
   | cleanup.sh -- body curl status code \
   | prettyprint.sh >/dev/null
 )
-(( "$(cat root-hal+xml.code)" == "200" )) || (hal::log::error "Fail to get XML Root resource"; exit 120)
+(( "$(cat root-hal+xml.code)" == "200" )) || (hal::log::error "Fail to get XML Root resource with status $(cat root-hal+xml.status)"; exit 120)
 hal::log::ok "Got Root XML resource"
 
 (export HTTP_IN_HEADERS="Accept:$(hal.sh root.json links mocking:yaml type)"; \
@@ -52,5 +52,26 @@ hal::log::ok "Got Root XML resource"
   | cleanup.sh -- body curl status code \
   | prettyprint.sh >/dev/null
 )
-(( "$(cat root-hal+yaml.code)" == "200" )) || (hal::log::error "Fail to get Root YAML resource"; exit 130)
+(( "$(cat root-hal+yaml.code)" == "200" )) || (hal::log::error "Fail to get Root YAML resource with status $(cat root-hal+yaml.status)"; exit 130)
 hal::log::ok "Got Root YAML resource"
+
+
+(export HTTP_IN_HEADERS="Accept:text/html"; \
+ GET "$ROOT_URL$(hal.sh root.json docs mocking:hal)" \
+  | rename.sh docs-hal+json \
+  | cleanup.sh -- body curl status code \
+  | prettyprint.sh >/dev/null
+)
+(( "$(cat docs-hal+json.code)" == "200" )) || (hal::log::error "Fail to get Root HAL resource with status $(cat docs-hal+json.status)"; exit 110)
+hal::log::ok "Got documentation for HAL JSON"
+open docs-hal+json.html
+
+(export HTTP_IN_HEADERS="Accept:text/html"; \
+ GET "$ROOT_URL$(hal.sh root.json docs mocking:yaml)" \
+  | rename.sh docs-hal+yaml \
+  | cleanup.sh -- body curl status code \
+  | prettyprint.sh >/dev/null
+)
+(( "$(cat docs-hal+yaml.code)" == "200" )) || (hal::log::error "Fail to get Root HAL resource with status $(cat docs-hal+yaml.status)"; exit 110)
+hal::log::ok "Got documentation for HAL YAML"
+open docs-hal+yaml.html
