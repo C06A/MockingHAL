@@ -214,6 +214,91 @@ curl -X PATCH http://localhost:8080/ \
 curl -X DELETE http://localhost:8080/
 ----
 
+== CORS support
+
+MockingHAL has built-in CORS support controlled by a separate YAML file —
+completely independent of the mock resource config managed through `POST /`,
+`PATCH /`, and `DELETE /`.
+
+=== Default behaviour
+
+The bundled `cors.yaml` allows requests from any `http://localhost` port and
+handles preflight `OPTIONS` requests automatically:
+
+[source,yaml]
+----
+origins: [http://localhost:*]
+methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD]
+headers: [Content-Type, Authorization, Accept]
+allowCredentials: false
+maxAgeSeconds: 3600
+----
+
+An empty `origins` list (`origins: []`) disables CORS entirely — no
+`Access-Control-*` headers are added to any response.
+
+=== Providing your own CORS config
+
+Set the `MOCKINGHAL_CORS` environment variable to the path of a YAML file
+before starting the server:
+
+[source,bash]
+----
+MOCKINGHAL_CORS=/etc/mockinghal/cors.yaml \
+  java -jar mockinghal-<version>-all.jar
+----
+
+If the path does not exist MockingHAL logs a warning and falls back to the
+bundled `cors.yaml`.
+
+=== Config fields
+
+[cols="1,1,4", options="header"]
+|===
+| Field | Default | Description
+
+| `origins`
+| `[]`
+| List of allowed origin patterns.
+  An empty list disables CORS.
+  A bare `*` allows any origin (returns `*` in `Access-Control-Allow-Origin`).
+
+| `methods`
+| `GET POST PUT PATCH DELETE OPTIONS HEAD`
+| Methods advertised in `Access-Control-Allow-Methods` on preflight responses.
+
+| `headers`
+| `Content-Type Authorization Accept`
+| Headers advertised in `Access-Control-Allow-Headers` on preflight responses.
+
+| `allowCredentials`
+| `false`
+| When `true`, adds `Access-Control-Allow-Credentials: true`.
+  Do **not** combine with `origins: ["*"]`.
+
+| `maxAgeSeconds`
+| `3600`
+| Value of `Access-Control-Max-Age` on preflight responses.
+|===
+
+=== Origin wildcard syntax
+
+Each entry in `origins` may contain `*` as a wildcard:
+
+* `\*` by itself matches any origin.
+* `\*` in the host matches exactly one domain label (no dots), e.g.
+  `http://*.example.com` matches `http://sub.example.com` but not
+  `http://sub.sub.example.com`.
+* `\*` as the port matches any port number, e.g. `http://localhost:*` matches
+  `http://localhost:3000`, `http://localhost:8080`, and so on.
+
+=== Preflight handling
+
+When MockingHAL receives an `OPTIONS` request that includes an
+`Access-Control-Request-Method` header and the request origin matches a
+configured pattern, it responds with `204 No Content` and the appropriate
+`Access-Control-Allow-*` headers — no mock resource config entry is needed.
+
 == Examples
 
 === Minimal JSON response
