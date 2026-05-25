@@ -14,7 +14,7 @@ object ResourceRegistry {
      * YAMLMapper accepts both YAML and JSON input.
      * jackson-module-kotlin enables deserialization into Kotlin data classes.
      */
-    private val yamlMapper: ObjectMapper = YAMLMapper().registerKotlinModule()
+    val yamlMapper: ObjectMapper = YAMLMapper().registerKotlinModule()
 
     private val resources = AtomicReference<Map<String, TreeNode>>(emptyMap())
 

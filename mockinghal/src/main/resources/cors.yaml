@@ -1,0 +1,19 @@
+# MockingHAL CORS configuration.
+# Override at startup by setting MOCKINGHAL_CORS=/path/to/your/cors.yaml.
+# origins: [] disables CORS entirely (secure default).
+# Use origins: ["*"] to allow all origins (dev convenience only).
+origins: [http://localhost:*]
+methods:
+  - GET
+  - POST
+  - PUT
+  - PATCH
+  - DELETE
+  - OPTIONS
+  - HEAD
+headers:
+  - Content-Type
+  - Authorization
+  - Accept
+allowCredentials: false
+maxAgeSeconds: 3600

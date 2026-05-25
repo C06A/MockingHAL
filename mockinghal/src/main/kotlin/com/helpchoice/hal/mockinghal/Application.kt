@@ -12,11 +12,57 @@ import io.ktor.utils.io.toByteArray
 import java.io.File
 import java.net.JarURLConnection
 
+data class CorsConfig(
+    val origins: List<String> = emptyList(),
+    val methods: List<String> = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"),
+    val headers: List<String> = listOf("Content-Type", "Authorization", "Accept"),
+    val allowCredentials: Boolean = false,
+    val maxAgeSeconds: Long = 3600,
+)
+
 fun main() {
     embeddedServer(CIO, port = 8080, module = Application::module).start(wait = true)
 }
 
 fun Application.module() {
+    val corsConfig = loadCorsConfig()
+    if (corsConfig.origins.isNotEmpty()) {
+        val originPatterns = corsConfig.origins.map { wildcardOriginToRegex(it) }
+        intercept(ApplicationCallPipeline.Plugins) {
+            val requestOrigin = call.request.headers[HttpHeaders.Origin] ?: return@intercept
+            val matchedOrigin = corsConfig.origins.zip(originPatterns)
+                .firstOrNull { (_, pattern) -> pattern.matches(requestOrigin) }
+                ?.let { (origin, _) -> if (origin == "*") "*" else requestOrigin }
+                ?: return@intercept
+
+            call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, matchedOrigin)
+            if (corsConfig.allowCredentials) {
+                call.response.headers.append(HttpHeaders.AccessControlAllowCredentials, "true")
+            }
+            if (matchedOrigin != "*") {
+                call.response.headers.append(HttpHeaders.Vary, HttpHeaders.Origin)
+            }
+
+            if (call.request.httpMethod == HttpMethod.Options &&
+                call.request.headers.contains(HttpHeaders.AccessControlRequestMethod)) {
+                call.response.headers.append(
+                    HttpHeaders.AccessControlAllowMethods,
+                    corsConfig.methods.joinToString(", ")
+                )
+                call.response.headers.append(
+                    HttpHeaders.AccessControlAllowHeaders,
+                    corsConfig.headers.joinToString(", ")
+                )
+                call.response.headers.append(
+                    HttpHeaders.AccessControlMaxAge,
+                    corsConfig.maxAgeSeconds.toString()
+                )
+                call.respond(HttpStatusCode.NoContent)
+                finish()
+            }
+        }
+    }
+
     // Load all YAML files from the bundled /default classpath directory in
     // sorted order so the server is useful out of the box.
     // POST / replaces this at runtime; PATCH / appends to it.
@@ -121,6 +167,46 @@ fun Application.module() {
             handle { handleMatch(call) }
         }
     }
+}
+
+/**
+ * Converts an origin pattern with optional wildcards into a [Regex].
+ *
+ * `*` in the host matches a single domain label (no dots), e.g. `*.example.com`
+ * matches `sub.example.com` but not `sub.sub.example.com`.
+ * `*` as the port matches any port number, e.g. `http://localhost:*`.
+ * A bare `*` matches any origin.
+ */
+private fun wildcardOriginToRegex(pattern: String): Regex {
+    if (pattern == "*") return Regex(".*")
+    val schemeDelim = pattern.indexOf("://")
+    val scheme    = if (schemeDelim >= 0) pattern.substring(0, schemeDelim) else ""
+    val authority = if (schemeDelim >= 0) pattern.substring(schemeDelim + 3) else pattern
+    // Split host and port; lastIndexOf(']') guards against IPv6 addresses like [::1]:8080
+    val portIdx = authority.lastIndexOf(':')
+    val hasPort = portIdx > authority.lastIndexOf(']')
+    val host = if (hasPort) authority.substring(0, portIdx) else authority
+    val port = if (hasPort) authority.substring(portIdx + 1) else ""
+    fun String.toSegmentRegex() = split('*').joinToString("[^.]+") { Regex.escape(it) }
+    val schemePart = if (scheme.isNotEmpty()) "${Regex.escape(scheme)}://" else ""
+    val portPart   = when {
+        port.isEmpty() -> ""
+        port == "*"    -> ":\\d+"
+        else           -> ":${Regex.escape(port)}"
+    }
+    return Regex("^$schemePart${host.toSegmentRegex()}$portPart$")
+}
+
+private fun loadCorsConfig(): CorsConfig {
+    val text = System.getenv("MOCKINGHAL_CORS")
+        ?.let { path ->
+            val f = File(path)
+            if (f.exists()) f.readText()
+            else { println("WARNING: MOCKINGHAL_CORS file not found: $path — using bundled cors.yaml"); null }
+        }
+        ?: Application::class.java.getResourceAsStream("/cors.yaml")?.bufferedReader()?.readText()
+        ?: return CorsConfig()
+    return ResourceRegistry.yamlMapper.readValue(text, CorsConfig::class.java)
 }
 
 /**
