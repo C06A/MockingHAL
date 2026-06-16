@@ -41,3 +41,9 @@ bin/
 ### Mac OS ###
 .DS_Store
 session-log.md
+
+### Claude Code ### — ignore local override file and session log
+.claude/settings.local.json
+.claude/session-log.md
+CLAUDE.local.md
+
