@@ -14,8 +14,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build only the WAR (servlet container deployment)
 ./gradlew :mockinghal:war
 
-# Run the server standalone (after building)
+# Run the server standalone (after building); starts on port 8080
 java -jar mockinghal/build/libs/mockinghal-all.jar
+
+# See what is holding port 8080 (cross-platform lsof/netstat helper)
+./gradlew :mockinghal:checkPort
 
 # Fetch the HALDiSh test dependency (required before running bash tests)
 ./gradlew :mockinghal:setup
@@ -30,7 +33,9 @@ mockinghal/src/test/bash/haldish.sh      # tests config load/replace/reset flow
 ./gradlew :mockinghal:publishAllPublicationsToCentralPortal
 ```
 
-There are no JUnit tests — all testing is done via the bash scripts above, which use the HALDiSh CLI (`build/haldish/`) to drive the live server.
+There are no JUnit tests — `tasks.test` exists but the project has no test sources. All testing is done via the bash scripts above, which use the HALDiSh CLI (`mockinghal/build/haldish/`) to drive the live server. There is no single-test runner; run the scripts directly.
+
+Gradle toolchain quirk: the root build uses `jvmToolchain(17)`, but the `:mockinghal` subproject (where all code lives) overrides to `jvmToolchain(21)`. The published artifact requires **Java 21+**.
 
 ## Architecture
 
@@ -60,6 +65,17 @@ Ktor module setup:
 - On startup, loads all files from the `default/` classpath directory (alphabetically) into `ResourceRegistry` via `loadDefaultResources()`. Works both from an exploded build and from the fat JAR.
 - `POST /` replaces all loaded resources; `PATCH /` appends/overrides by top-level key; `DELETE /` resets to defaults. All three accept plain YAML/JSON or multipart bodies.
 - Two catch-all routes (`{...}` and `/`) delegate to `handleMatch()`, which calls `RequestMatcher.findMatch()` and writes the `MatchResult` back as an HTTP response.
+- **CORS is hand-rolled here** (not the Ktor CORS plugin): `CorsConfig` data class + `loadCorsConfig()` + `wildcardOriginToRegex()`. An `intercept` adds `Access-Control-*` headers when the request `Origin` matches a configured pattern, and answers preflight `OPTIONS` (those carrying `Access-Control-Request-Method`) with 204. CORS is **independent** of the mock resource config — it is loaded once at startup and is *not* affected by `POST`/`PATCH`/`DELETE /`.
+
+## CORS configuration
+
+CORS is configured by a YAML file, separate from the mock resource config. The bundled `mockinghal/src/main/resources/cors.yaml` allows any `http://localhost:*` origin. Override it by pointing `MOCKINGHAL_CORS` at a YAML file before starting:
+
+```bash
+MOCKINGHAL_CORS=/path/to/cors.yaml java -jar mockinghal/build/libs/mockinghal-all.jar
+```
+
+If the path doesn't exist, MockingHAL logs a warning and falls back to the bundled file. `origins: []` disables CORS entirely; a bare `*` allows any origin. Wildcards: `*` as a host label matches one domain label (no dots); `*` as the port matches any port. Parsing reuses `ResourceRegistry.yamlMapper`.
 
 ## Configuration format
 
@@ -102,8 +118,8 @@ Key rules:
 `mockinghal/src/main/resources/default/` contains two YAML/JSON files that are bundled into the fat JAR and loaded on startup: the MockingHAL self-description API and its config-guide docs.
 
 `mockinghal/src/test/resources/` contains example configs:
-- `haldish/hal_demo.yaml` — pedagogical HAL API demo (used by `haldish.sh`)
-- `jsonplaceholder/jsonplaceholder.yaml` + `jsonplaceholder_1.yaml` — JSONPlaceholder-style mock with HAL links
+- `haldish/hal_demo.yaml` (and `.json`/`.xml`/`.yml` variants) — pedagogical HAL API demo (used by `haldish.sh`)
+- `jsonplaceholder/` — JSONPlaceholder-style mock with HAL links
 
 ## HALDiSh dependency
 

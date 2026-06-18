@@ -197,6 +197,35 @@ private fun wildcardOriginToRegex(pattern: String): Regex {
     return Regex("^$schemePart${host.toSegmentRegex()}$portPart$")
 }
 
+/**
+ * Loads the CORS configuration from (in order) the file named by the
+ * `MOCKINGHAL_CORS` environment variable, the bundled `/cors.yaml` resource, or
+ * the [CorsConfig] defaults. Parsed with the shared [ResourceRegistry.yamlMapper].
+ *
+ * ## Why a hand-rolled interceptor instead of Ktor's `CORS` plugin
+ *
+ * This is a deliberately lightweight, permissive header-stamper tuned for a mock
+ * server — not a spec-enforcing gate. It differs from `io.ktor:ktor-server-cors`:
+ *
+ * - **Config source** — read from an external YAML file (env var or bundled
+ *   resource), so origins can change without a recompile. The Ktor plugin is
+ *   configured in code via `install(CORS){…}` and is fixed at build time.
+ * - **Origin matching** — custom wildcard syntax compiled by
+ *   [wildcardOriginToRegex] (`*` host label, `*` port); the exact request origin
+ *   is echoed back (or literal `*`). Ktor uses `allowHost(...)`/`anyHost()` with
+ *   explicit subdomain/scheme lists and no port-wildcard equivalent.
+ * - **Preflight** — handled manually here (`OPTIONS` + `Access-Control-Request-Method`
+ *   → emit Allow-Methods/Headers/Max-Age → 204). The Ktor plugin owns preflight
+ *   automatically.
+ * - **Validation strictness** — this code only *adds* headers when the origin
+ *   matches; it never rejects a request for a disallowed method/header, and the
+ *   preflight always advertises the full configured lists. The Ktor plugin
+ *   *enforces* the allowlists and rejects violations (403). Permissiveness is
+ *   intentional so CORS never blocks test traffic.
+ * - **Spec corners not covered here** — no `Access-Control-Expose-Headers`, and no
+ *   guard against the invalid `allowCredentials: true` + `origins: ["*"]` combo
+ *   (the README warns; the code does not). The Ktor plugin handles both.
+ */
 private fun loadCorsConfig(): CorsConfig {
     val text = System.getenv("MOCKINGHAL_CORS")
         ?.let { path ->
