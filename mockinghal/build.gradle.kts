@@ -29,6 +29,15 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.12")
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.0.0")
     haldish("com.helpchoice:haldish:2.2.4@run")
+
+    testImplementation(kotlin("test-junit5"))
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging { events("passed", "skipped", "failed") }
 }
 
 // ─── JVM toolchain ────────────────────────────────────────────────────────────

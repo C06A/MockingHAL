@@ -20,8 +20,34 @@ data class CorsConfig(
     val maxAgeSeconds: Long = 3600,
 )
 
+/** Default listen port, used when no override is configured. */
+const val DEFAULT_PORT = 8080
+
+/**
+ * Resolves the listen port, in order of precedence:
+ *   1. `MOCKINGHAL_PORT` environment variable
+ *   2. `PORT` environment variable (PaaS convention, e.g. Heroku)
+ *   3. `mockinghal.port` JVM system property
+ *   4. [DEFAULT_PORT] (8080)
+ *
+ * A non-numeric or out-of-range (1..65535) value logs a warning and falls back to the default.
+ */
+fun resolvePort(
+    mockinghalPort: String? = System.getenv("MOCKINGHAL_PORT"),
+    portEnv:        String? = System.getenv("PORT"),
+    sysProp:        String? = System.getProperty("mockinghal.port"),
+): Int {
+    val raw = mockinghalPort ?: portEnv ?: sysProp ?: return DEFAULT_PORT
+    val port = raw.trim().toIntOrNull()
+    if (port == null || port !in 1..65535) {
+        println("WARNING: invalid port '$raw' — using default $DEFAULT_PORT")
+        return DEFAULT_PORT
+    }
+    return port
+}
+
 fun main() {
-    embeddedServer(CIO, port = 8080, module = Application::module).start(wait = true)
+    embeddedServer(CIO, port = resolvePort(), module = Application::module).start(wait = true)
 }
 
 fun Application.module() {
@@ -177,7 +203,7 @@ fun Application.module() {
  * `*` as the port matches any port number, e.g. `http://localhost:*`.
  * A bare `*` matches any origin.
  */
-private fun wildcardOriginToRegex(pattern: String): Regex {
+internal fun wildcardOriginToRegex(pattern: String): Regex {
     if (pattern == "*") return Regex(".*")
     val schemeDelim = pattern.indexOf("://")
     val scheme    = if (schemeDelim >= 0) pattern.substring(0, schemeDelim) else ""
