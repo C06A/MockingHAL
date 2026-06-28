@@ -129,13 +129,26 @@ object RequestMatcher {
         // no match leaves the node's own response elements in effect.
         // Take the first (and recommended only) header entry.
         // For AND on multiple headers, nest headerIn inside a child node.
+        //
+        // The Accept header is negotiated by q-value rather than matched by plain
+        // containment: a pattern only wins if the media type it matches is preferred
+        // (higher q) over the node's own default Content-Type.  This prevents a lower-
+        // priority Accept entry (e.g. application/hal+xml;q=0.9) from overriding the
+        // higher-priority default (e.g. application/hal+json, q=1.0).
         if (this.headerIn.isNotEmpty()) {
             val (headerName, patterns) = this.headerIn.entries.first()
             val value = headers[headerName.lowercase()] ?: ""
-            for ((pattern, child) in patterns) {
-                if (!Regex(pattern).containsMatchIn(value)) continue
-                children.add(child)
-                break
+            if (headerName.equals("Accept", ignoreCase = true)) {
+                val defaultContentType = newAcc.headerOut.entries
+                    .firstOrNull { it.key.equals("Content-Type", ignoreCase = true) }
+                    ?.value
+                negotiateAccept(patterns, value, defaultContentType)?.let { children.add(it) }
+            } else {
+                for ((pattern, child) in patterns) {
+                    if (!Regex(pattern).containsMatchIn(value)) continue
+                    children.add(child)
+                    break
+                }
             }
         }
 
@@ -155,5 +168,68 @@ object RequestMatcher {
             result = child.match(method, pathAfter, query, headers, body, result) ?: return null
         }
         return result
+    }
+
+    /** A single media range parsed from an Accept header, with its quality factor. */
+    private data class MediaRange(val type: String, val q: Double)
+
+    /**
+     * Picks the [headerIn] child for an Accept header by HTTP content negotiation.
+     *
+     * Each candidate representation is scored by the quality factor (q) the client
+     * assigns to its media type.  The node's own response (its [defaultContentType])
+     * competes against every [patterns] entry; a pattern is selected only when the
+     * media type it matches is *strictly* preferred over the default, so equal-q ties
+     * fall to the default.  Returns null to keep the node's default response.
+     */
+    private fun negotiateAccept(
+        patterns:           Map<String, TreeNode>,
+        acceptValue:        String,
+        defaultContentType: String?,
+    ): TreeNode? {
+        val ranges = parseAccept(acceptValue).filter { it.q > 0.0 }
+        if (ranges.isEmpty()) return null   // no (acceptable) Accept → keep default
+
+        // The default representation's score; -1 when the node declares no Content-Type,
+        // so any matching pattern (q > 0) still wins, preserving plain-selector behaviour.
+        val defaultScore = defaultContentType
+            ?.let { ct -> ranges.filter { rangeMatchesType(it.type, ct) }.maxOfOrNull { it.q } ?: 0.0 }
+            ?: -1.0
+
+        var bestChild: TreeNode? = null
+        var bestScore = defaultScore
+        for ((pattern, child) in patterns) {
+            val regex = Regex(pattern)
+            val score = ranges.filter { regex.containsMatchIn(it.type) }.maxOfOrNull { it.q } ?: continue
+            if (score > bestScore) {        // strictly greater: ties stay with the default
+                bestScore = score
+                bestChild = child
+            }
+        }
+        return bestChild
+    }
+
+    /** Parses an Accept header value into its media ranges; absent q defaults to 1.0. */
+    private fun parseAccept(value: String): List<MediaRange> =
+        value.split(',').mapNotNull { part ->
+            val segments = part.split(';').map { it.trim() }
+            val type = segments.firstOrNull()?.lowercase()?.takeIf { it.isNotEmpty() }
+                ?: return@mapNotNull null
+            val q = segments.drop(1)
+                .firstOrNull { it.startsWith("q=", ignoreCase = true) }
+                ?.substringAfter('=')
+                ?.toDoubleOrNull()
+                ?: 1.0
+            MediaRange(type, q)
+        }
+
+    /** True when an Accept media [range] (possibly wildcarded) matches a [contentType]. */
+    private fun rangeMatchesType(range: String, contentType: String): Boolean {
+        if (range == "*/*") return true
+        val ct = contentType.substringBefore(';').trim().lowercase()
+        val (rType, rSub) = range.split('/', limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+        val (cType, cSub) = ct.split('/', limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+        if (rType != cType) return false
+        return rSub == "*" || rSub == cSub
     }
 }
