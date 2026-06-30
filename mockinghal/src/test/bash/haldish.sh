@@ -23,7 +23,7 @@ GET $ROOT_URL \
 hal::log::ok "Got Root resource"
 
 POST $ROOT_URL$(hal.sh root.json links self href) \
-    -f "$_SELF_DIR/../resources/haldish/hal_demo.yaml" \
+    -f "$_SELF_DIR/../resources/haldish/hal_root.yaml" \
   | rename.sh root_config \
   | prettyprint.sh \
   | cleanup.sh -- code curl status >/dev/null

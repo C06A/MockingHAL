@@ -1,0 +1,428 @@
+{
+  "embedded": {
+    "path": {
+      "/embedded": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded",
+                      "type": "application/hal+json"
+                    },
+                    "curies": [
+                      {
+                        "href": "/docs/embedded#{rel}",
+                        "templated": true,
+                        "name": "doc"
+                      }
+                    ],
+                    "doc:scalars": {
+                      "href": "/embedded/scalars",
+                      "title": "Scalar property values"
+                    },
+                    "doc:simple": {
+                      "href": "/embedded/simple",
+                      "title": "Simple flat object"
+                    },
+                    "doc:links": {
+                      "href": "/embedded/with-links",
+                      "title": "Embedded link resources (array)"
+                    },
+                    "doc:deep": {
+                      "href": "/embedded/deep",
+                      "title": "Deeply nested embedded resource"
+                    },
+                    "doc:guide": {
+                      "href": "/docs/embedded",
+                      "type": "text/html",
+                      "title": "Embedded resources — HTML guide"
+                    }
+                  },
+                  "title": "HAL+XML Embedded Resource Samples",
+                  "description": "One document carrying every embedded-resource shape: scalar values, a simple object, an array of link resources, and a deeply nested resource. Follow the doc: links (documented at /docs/embedded) for an explanation of each.",
+                  "_embedded": {
+                    "doc:scalars": {
+                      "_links": {
+                        "self": {
+                          "href": "/embedded/scalars"
+                        }
+                      },
+                      "title": "Scalar Values",
+                      "booleanTrue": true,
+                      "booleanFalse": false,
+                      "integer": 42,
+                      "number": 3.14,
+                      "string": "hello world",
+                      "nullValue": null
+                    },
+                    "doc:simple": {
+                      "_links": {
+                        "self": {
+                          "href": "/embedded/simple"
+                        }
+                      },
+                      "title": "Simple Object",
+                      "id": 1,
+                      "name": "Widget",
+                      "category": "tools",
+                      "active": true,
+                      "price": 9.99
+                    },
+                    "doc:links": [
+                      {
+                        "_links": {
+                          "self": {
+                            "href": "/embedded/with-links/1"
+                          },
+                          "next": {
+                            "href": "/embedded/with-links/2",
+                            "title": "Second link resource"
+                          },
+                          "related": {
+                            "href": "/embedded/simple",
+                            "type": "application/hal+json",
+                            "title": "The simple sample"
+                          }
+                        },
+                        "title": "Link Resource 1",
+                        "name": "First"
+                      },
+                      {
+                        "_links": {
+                          "self": {
+                            "href": "/embedded/with-links/2"
+                          },
+                          "prev": {
+                            "href": "/embedded/with-links/1",
+                            "title": "First link resource"
+                          }
+                        },
+                        "title": "Link Resource 2",
+                        "name": "Second"
+                      }
+                    ],
+                    "doc:deep": {
+                      "_links": {
+                        "self": {
+                          "href": "/embedded/deep"
+                        }
+                      },
+                      "title": "Deep — level 1",
+                      "level": 1,
+                      "_embedded": {
+                        "child": {
+                          "_links": {
+                            "self": {
+                              "href": "/embedded/deep/child"
+                            }
+                          },
+                          "title": "Deep — level 2",
+                          "level": 2,
+                          "_embedded": {
+                            "grandchild": {
+                              "_links": {
+                                "self": {
+                                  "href": "/embedded/deep/child/grandchild"
+                                }
+                              },
+                              "title": "Deep — level 3 (leaf)",
+                              "level": 3,
+                              "value": "deepest payload"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "doc:guide": {
+                      "_links": {
+                        "self": {
+                          "href": "/docs/embedded",
+                          "type": "text/html"
+                        }
+                      },
+                      "title": "Embedded Resources — Documentation",
+                      "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Embedded Resources — MockingHAL HAL Demo Docs</title>\n  <style>\n    body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }\n    h2 { border-bottom: 2px solid #3b82f6; padding-bottom: .3rem; margin-top: 2.5rem; color: #1e40af; }\n    code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }\n    pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: .85em; }\n    a { color: #2563eb; }\n  </style>\n</head>\n<body>\n<h1>Embedded Resources in HAL</h1>\n<p>\n  An <strong>embedded resource</strong> is a full resource served inline inside its\n  parent, under <code>_embedded</code> (JSON) or as a nested <code>&lt;resource rel=\"…\"&gt;</code>\n  element (XML). Embedding lets a client get a resource and its related resources in a\n  single response. This page documents the samples in\n  <a href=\"/embedded\">/embedded</a>.\n</p>\n\n<h2 id=\"scalars\">scalars <code>GET /embedded/scalars</code></h2>\n<p>An embedded resource whose properties are scalar values: boolean, integer, number,\n   string, and null (<code>xsi:nil=\"true\"</code> in XML).</p>\n\n<h2 id=\"simple\">simple <code>GET /embedded/simple</code></h2>\n<p>An embedded resource holding a flat object of properties — the everyday case.</p>\n\n<h2 id=\"links\">links <code>GET /embedded/with-links</code></h2>\n<p>An <em>array</em> of embedded resources sharing one relation. Each is a link\n   resource carrying its own <code>self</code>, <code>next</code>/<code>prev</code>,\n   and <code>related</code> links.</p>\n<pre>&lt;resource rel=\"doc:links\" href=\"/embedded/with-links/1\"&gt;\n  &lt;link rel=\"next\" href=\"/embedded/with-links/2\"/&gt;\n&lt;/resource&gt;\n&lt;resource rel=\"doc:links\" href=\"/embedded/with-links/2\"&gt; … &lt;/resource&gt;</pre>\n\n<h2 id=\"deep\">deep <code>GET /embedded/deep</code></h2>\n<p>An embedded resource nested several levels deep: <code>deep</code> embeds\n   <code>child</code>, which embeds <code>grandchild</code>. Embedding composes to any depth.</p>\n\n<h2 id=\"guide\">curies</h2>\n<p>The <code>curies</code> link defines the <code>doc</code> prefix\n   (<code>/docs/embedded#{rel}</code>), so each compact relation\n   <code>doc:scalars</code>, <code>doc:simple</code>, <code>doc:links</code>,\n   <code>doc:deep</code> resolves to its section on this page.</p>\n</body>\n</html>"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_scalars": {
+    "path": {
+      "/embedded/scalars": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/scalars"
+                    }
+                  },
+                  "title": "Scalar Values",
+                  "booleanTrue": true,
+                  "booleanFalse": false,
+                  "integer": 42,
+                  "number": 3.14,
+                  "string": "hello world",
+                  "nullValue": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_simple": {
+    "path": {
+      "/embedded/simple": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/simple"
+                    }
+                  },
+                  "title": "Simple Object",
+                  "id": 1,
+                  "name": "Widget",
+                  "category": "tools",
+                  "active": true,
+                  "price": 9.99
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_with_links_1": {
+    "path": {
+      "/embedded/with-links/1": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/with-links/1"
+                    },
+                    "next": {
+                      "href": "/embedded/with-links/2",
+                      "title": "Second link resource"
+                    },
+                    "related": {
+                      "href": "/embedded/simple",
+                      "type": "application/hal+json",
+                      "title": "The simple sample"
+                    }
+                  },
+                  "title": "Link Resource 1",
+                  "name": "First"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_with_links_2": {
+    "path": {
+      "/embedded/with-links/2": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/with-links/2"
+                    },
+                    "prev": {
+                      "href": "/embedded/with-links/1",
+                      "title": "First link resource"
+                    }
+                  },
+                  "title": "Link Resource 2",
+                  "name": "Second"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_deep": {
+    "path": {
+      "/embedded/deep": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/deep"
+                    }
+                  },
+                  "title": "Deep — level 1",
+                  "level": 1,
+                  "_embedded": {
+                    "child": {
+                      "_links": {
+                        "self": {
+                          "href": "/embedded/deep/child"
+                        }
+                      },
+                      "title": "Deep — level 2",
+                      "level": 2,
+                      "_embedded": {
+                        "grandchild": {
+                          "_links": {
+                            "self": {
+                              "href": "/embedded/deep/child/grandchild"
+                            }
+                          },
+                          "title": "Deep — level 3 (leaf)",
+                          "level": 3,
+                          "value": "deepest payload"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_deep_child": {
+    "path": {
+      "/embedded/deep/child": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/deep/child"
+                    }
+                  },
+                  "title": "Deep — level 2",
+                  "level": 2,
+                  "_embedded": {
+                    "grandchild": {
+                      "_links": {
+                        "self": {
+                          "href": "/embedded/deep/child/grandchild"
+                        }
+                      },
+                      "title": "Deep — level 3 (leaf)",
+                      "level": 3,
+                      "value": "deepest payload"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "embedded_deep_child_grandchild": {
+    "path": {
+      "/embedded/deep/child/grandchild": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
+                "resource": {
+                  "_links": {
+                    "self": {
+                      "href": "/embedded/deep/child/grandchild"
+                    }
+                  },
+                  "title": "Deep — level 3 (leaf)",
+                  "level": 3,
+                  "value": "deepest payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "docs_embedded": {
+    "path": {
+      "/docs/embedded": {
+        "path": {
+          "": {
+            "method": {
+              "GET": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "text/html; charset=utf-8"
+                },
+                "resource": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Embedded Resources — MockingHAL HAL Demo Docs</title>\n  <style>\n    body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }\n    h2 { border-bottom: 2px solid #3b82f6; padding-bottom: .3rem; margin-top: 2.5rem; color: #1e40af; }\n    code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }\n    pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: .85em; }\n    a { color: #2563eb; }\n  </style>\n</head>\n<body>\n<h1>Embedded Resources in HAL</h1>\n<p>\n  An <strong>embedded resource</strong> is a full resource served inline inside its\n  parent, under <code>_embedded</code> (JSON) or as a nested <code>&lt;resource rel=\"…\"&gt;</code>\n  element (XML). Embedding lets a client get a resource and its related resources in a\n  single response. This page documents the samples in\n  <a href=\"/embedded\">/embedded</a>.\n</p>\n\n<h2 id=\"scalars\">scalars <code>GET /embedded/scalars</code></h2>\n<p>An embedded resource whose properties are scalar values: boolean, integer, number,\n   string, and null (<code>xsi:nil=\"true\"</code> in XML).</p>\n\n<h2 id=\"simple\">simple <code>GET /embedded/simple</code></h2>\n<p>An embedded resource holding a flat object of properties — the everyday case.</p>\n\n<h2 id=\"links\">links <code>GET /embedded/with-links</code></h2>\n<p>An <em>array</em> of embedded resources sharing one relation. Each is a link\n   resource carrying its own <code>self</code>, <code>next</code>/<code>prev</code>,\n   and <code>related</code> links.</p>\n<pre>&lt;resource rel=\"doc:links\" href=\"/embedded/with-links/1\"&gt;\n  &lt;link rel=\"next\" href=\"/embedded/with-links/2\"/&gt;\n&lt;/resource&gt;\n&lt;resource rel=\"doc:links\" href=\"/embedded/with-links/2\"&gt; … &lt;/resource&gt;</pre>\n\n<h2 id=\"deep\">deep <code>GET /embedded/deep</code></h2>\n<p>An embedded resource nested several levels deep: <code>deep</code> embeds\n   <code>child</code>, which embeds <code>grandchild</code>. Embedding composes to any depth.</p>\n\n<h2 id=\"guide\">curies</h2>\n<p>The <code>curies</code> link defines the <code>doc</code> prefix\n   (<code>/docs/embedded#{rel}</code>), so each compact relation\n   <code>doc:scalars</code>, <code>doc:simple</code>, <code>doc:links</code>,\n   <code>doc:deep</code> resolves to its section on this page.</p>\n</body>\n</html>"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

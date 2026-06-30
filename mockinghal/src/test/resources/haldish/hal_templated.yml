@@ -1,0 +1,558 @@
+# =============================================================================
+# RFC 6570 URI Template expression demonstrations
+#
+# All resources nested under /templated (segment-safe path nesting).
+# Grouped by RFC 6570 section:
+#
+#   index    GET /templated               — section listing
+#   3.2.2    GET /templated/simple        — {var}    simple string expansion
+#   3.2.3    GET /templated/reserved      — {+var}   reserved expansion
+#   3.2.4    GET /templated/fragment      — {#var}   fragment expansion
+#   3.2.5    GET /templated/label         — {.var}   label expansion
+#   3.2.6    GET /templated/path-segment  — {/var}   path segment expansion
+#   3.2.7    GET /templated/path-params   — {;var}   path-style parameters
+#   3.2.8    GET /templated/query         — {?var}   form-style query
+#   3.2.9    GET /templated/query-cont    — {&var}   query continuation
+#   2.4      GET /templated/modifiers     — :N *     value modifiers
+#            GET /templated/combined      — multi-operator combined example
+# =============================================================================
+
+templated:
+  path:
+    /templated:
+      path:
+
+        # ── Index: GET /templated ─────────────────────────────────────────────
+
+        '':
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated
+                    type: application/hal+json
+                  parent:
+                    href: /
+                    type: application/hal+json
+                  curies:
+                    - name: rfc
+                      href: "https://www.rfc-editor.org/rfc/rfc6570#section-{rel}"
+                      templated: true
+                  "rfc:3.2.2":
+                    href: /templated/simple
+                    type: application/hal+json
+                    title: "Simple string expansion — {var}"
+                  "rfc:3.2.3":
+                    href: /templated/reserved
+                    type: application/hal+json
+                    title: "Reserved expansion — {+var}"
+                  "rfc:3.2.4":
+                    href: /templated/fragment
+                    type: application/hal+json
+                    title: "Fragment expansion — {#var}"
+                  "rfc:3.2.5":
+                    href: /templated/label
+                    type: application/hal+json
+                    title: "Label expansion with dot-prefix — {.var}"
+                  "rfc:3.2.6":
+                    href: /templated/path-segment
+                    type: application/hal+json
+                    title: "Path segment expansion — {/var}"
+                  "rfc:3.2.7":
+                    href: /templated/path-params
+                    type: application/hal+json
+                    title: "Path-style parameter expansion — {;var}"
+                  "rfc:3.2.8":
+                    href: /templated/query
+                    type: application/hal+json
+                    title: "Form-style query expansion — {?var}"
+                  "rfc:3.2.9":
+                    href: /templated/query-cont
+                    type: application/hal+json
+                    title: "Form-style query continuation — {&var}"
+                  "rfc:2.4":
+                    href: /templated/modifiers
+                    type: application/hal+json
+                    title: "Value modifiers — :maxlength and *explode"
+                  combined:
+                    href: /templated/combined
+                    type: application/hal+json
+                    title: Combined example — multiple expression types in one template
+                title: RFC 6570 URI Template Expressions
+                description: >-
+                  HAL links carry "templated": true when the href is a URI Template (RFC 6570).
+                  Clients must expand the template before following the link.
+                  Each resource below demonstrates a different expression type or modifier.
+
+        # ── 3.2.2 Simple string expansion: {var} ─────────────────────────────
+
+        /simple:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/simple
+                  parent:
+                    href: /templated
+                  "demo:by-id":
+                    href: "/items/{id}"
+                    templated: true
+                    title: Single variable — {id} is percent-encoded on expansion
+                  "demo:nested":
+                    href: "/users/{username}/posts/{postId}"
+                    templated: true
+                    title: Two variables in one path — each encoded independently
+                  "demo:multi-var":
+                    href: "/report{?from,to,format}"
+                    templated: true
+                    title: "Comma-separated variable list in one expression (§3.2.1)"
+                  "demo:list-expand":
+                    href: "/items/{tags*}"
+                    templated: true
+                    title: "Explode list * — values comma-joined in place: /items/news,tech,food"
+                title: "Simple String Expansion — {var}"
+                rfc_section: "3.2.2"
+                operator: (none — default)
+                rules:
+                  - Variable value is percent-encoded; reserved chars /?# etc. become %XX
+                  - "Comma-separated list {a,b,c} — values joined without separator"
+                  - Undefined variable expands to empty string
+                  - List elements joined by comma; assoc-array keys=values joined by comma
+                expansions:
+                  "{id}=42": /items/42
+                  "{username}=alice, {postId}=7": /users/alice/posts/7
+                  "{?from,to,format}=2026-01,2026-06,json": "/report?from=2026-01&to=2026-06&format=json"
+                  "{id}=hello world": "/items/hello%20world"
+                  "{tags*}=[news,tech,food]": /items/news,tech,food
+
+        # ── 3.2.3 Reserved expansion: {+var} ─────────────────────────────────
+
+        /reserved:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/reserved
+                  parent:
+                    href: /templated
+                  "demo:proxy":
+                    href: "/proxy/{+url}"
+                    templated: true
+                    title: Embed a full URL — slashes and colons pass through unencoded
+                  "demo:base":
+                    href: "{+base}/docs/{page}"
+                    templated: true
+                    title: Variable base URL prepended to a literal path
+                  "demo:cdn":
+                    href: "https://cdn.example.com{+assetPath}"
+                    templated: true
+                    title: Append a known-safe path with slashes preserved
+                  "demo:list-expand":
+                    href: "/cache/{+urls*}"
+                    templated: true
+                    title: "Explode list * — comma-joined, reserved chars (/ :) unencoded"
+                title: "Reserved Expansion — {+var}"
+                rfc_section: "3.2.3"
+                operator: "+"
+                rules:
+                  - "Reserved chars (:/?#[]@!$&'()*+,;=) and pct-encoded triplets pass through unencoded"
+                  - Use when the variable is a trusted URI component (path, full URL)
+                  - "Do NOT use for user input — no encoding means injection risk"
+                expansions:
+                  "{+url}=example.com/api/v1": /proxy/example.com/api/v1
+                  "{+base}=https://api.example.com": "https://api.example.com/docs/intro"
+                  "{+assetPath}=/images/logo.png": "https://cdn.example.com/images/logo.png"
+                  "{+urls*}=[api.a.com/v1,api.b.com/v2]": /cache/api.a.com/v1,api.b.com/v2
+
+        # ── 3.2.4 Fragment expansion: {#var} ─────────────────────────────────
+
+        /fragment:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/fragment
+                  parent:
+                    href: /templated
+                  "demo:anchor":
+                    href: "/docs{#section}"
+                    templated: true
+                    title: "Jump to a named anchor — {#installation} → /docs#installation"
+                  "demo:multi-anchor":
+                    href: "/page{#chapter,heading}"
+                    templated: true
+                    title: Multiple fragment values — comma-joined in the fragment
+                  "demo:list-expand":
+                    href: "/page{#sections*}"
+                    templated: true
+                    title: "Explode list * — each element comma-joined in the fragment: #intro,setup,usage"
+                title: "Fragment Expansion — {#var}"
+                rfc_section: "3.2.4"
+                operator: "#"
+                rules:
+                  - Produces a fragment identifier starting with #
+                  - Reserved chars are NOT percent-encoded (same passthrough rules as {+var})
+                  - Servers never see the fragment — it is resolved client-side only
+                  - "Multiple vars: #val1,val2 (comma-joined, no space)"
+                expansions:
+                  "{#section}=installation": "/docs#installation"
+                  "{#chapter,heading}=api,auth": "/page#api,auth"
+                  "{#sections*}=[intro,setup,usage]": "/page#intro,setup,usage"
+
+        # ── 3.2.5 Label expansion with dot-prefix: {.var} ────────────────────
+
+        /label:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/label
+                  parent:
+                    href: /templated
+                  "demo:extension":
+                    href: "/data/export{.format}"
+                    templated: true
+                    title: "File extension — {.json} → /data/export.json"
+                  "demo:version":
+                    href: "/release{.major,minor,patch}"
+                    templated: true
+                    title: "Dot-separated version label — {.2,1,0} → /release.2.1.0"
+                  "demo:subdomain":
+                    href: "https://{.env}api.example.com/"
+                    templated: true
+                    title: "Subdomain prefix — {.staging} → https://staging.api.example.com/"
+                  "demo:list-expand":
+                    href: "/asset{.classes*}"
+                    templated: true
+                    title: "Explode list * — each element its own dot: /asset.news.tech.featured"
+                title: "Label Expansion with Dot-Prefix — {.var}"
+                rfc_section: "3.2.5"
+                operator: "."
+                rules:
+                  - Each variable is prefixed with a dot
+                  - "Multiple vars produce .val1.val2.val3 (each dot-prefixed)"
+                  - Commonly used for file extensions and version labels
+                  - Undefined variable is omitted (no dot emitted)
+                expansions:
+                  "{.format}=json": /data/export.json
+                  "{.major,minor,patch}=2,1,0": /release.2.1.0
+                  "{.env}=staging": "https://staging.api.example.com/"
+                  "{.classes*}=[news,tech,featured]": /asset.news.tech.featured
+
+        # ── 3.2.6 Path segment expansion: {/var} ─────────────────────────────
+
+        /path-segment:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/path-segment
+                  parent:
+                    href: /templated
+                  "demo:versioned":
+                    href: "/api{/version}/resources"
+                    templated: true
+                    title: "Insert a version segment — {/v2} → /api/v2/resources"
+                  "demo:breadcrumb":
+                    href: "{/category,subcategory,slug}"
+                    templated: true
+                    title: "Build a path from multiple segments — /tech/ktor/intro"
+                  "demo:exploded-path":
+                    href: "/files{/segments*}"
+                    templated: true
+                    title: "Explode list * — each element gets its own /: /files/a/b/c"
+                title: "Path Segment Expansion — {/var}"
+                rfc_section: "3.2.6"
+                operator: "/"
+                rules:
+                  - Each variable is prefixed with /
+                  - "Multiple vars produce /val1/val2/val3 (each slash-prefixed)"
+                  - "Explode modifier (*): list elements each receive their own / prefix"
+                  - Undefined variable is omitted (no slash emitted)
+                expansions:
+                  "{/version}=v2": /api/v2/resources
+                  "{/category,subcategory,slug}=tech,ktor,intro": /tech/ktor/intro
+                  "{/segments*}=[api,v2,users]": /files/api/v2/users
+
+        # ── 3.2.7 Path-style parameter expansion: {;var} ─────────────────────
+
+        /path-params:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/path-params
+                  parent:
+                    href: /templated
+                  "demo:map":
+                    href: "/map{;lat,lng,zoom}"
+                    templated: true
+                    title: "Matrix parameters — ;lat=40.7;lng=-74;zoom=12"
+                  "demo:render":
+                    href: "/render{;width,height,format}"
+                    templated: true
+                    title: "Rendering options — ;width=800;height=600;format=png"
+                  "demo:assoc-expand":
+                    href: "/items{;opts*}"
+                    templated: true
+                    title: "Explode assoc array * — each pair becomes ;name=value: /items;sort=name;order=asc"
+                title: "Path-Style Parameter Expansion — {;var}"
+                rfc_section: "3.2.7"
+                operator: ";"
+                rules:
+                  - Each variable is prefixed with ; and rendered as name=value
+                  - "Undefined variable → ;name (no = sign, no value)"
+                  - "Empty value → ;name= (name present, empty value)"
+                  - Also called matrix parameters; less common than query params
+                expansions:
+                  "{;lat,lng,zoom}=40.7,-74,12": /map;lat=40.7;lng=-74;zoom=12
+                  "{;width,height,format}=800,600,png": /render;width=800;height=600;format=png
+                  "{;opts*}={sort:name,order:asc}": /items;sort=name;order=asc
+
+        # ── 3.2.8 Form-style query expansion: {?var} ─────────────────────────
+
+        /query:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/query
+                  parent:
+                    href: /templated
+                  "demo:search":
+                    href: "/items{?q,page,limit}"
+                    templated: true
+                    title: "Standard search — first param with ?, rest with &"
+                  "demo:filter":
+                    href: "/products{?category,minPrice,maxPrice,inStock}"
+                    templated: true
+                    title: Multi-parameter filter — undefined params are omitted
+                  "demo:fields":
+                    href: "/users{?fields*}"
+                    templated: true
+                    title: "Explode list * — ?fields=a&fields=b&fields=c"
+                title: "Form-Style Query Expansion — {?var}"
+                rfc_section: "3.2.8"
+                operator: "?"
+                rules:
+                  - Produces a standard query string starting with ?
+                  - "Multiple vars: ?key1=val1&key2=val2 (& between pairs)"
+                  - Undefined variable is omitted (key not written)
+                  - Most common template expression for search and filter links in HAL
+                expansions:
+                  "{?q,page,limit}=hal,2,20": "/items?q=hal&page=2&limit=20"
+                  "{?category,minPrice}=books,9.99": "/products?category=books&minPrice=9.99"
+                  "{?fields*}=[title,author,summary]": "/users?fields=title&fields=author&fields=summary"
+
+        # ── 3.2.9 Form-style query continuation: {&var} ──────────────────────
+
+        /query-cont:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/query-cont
+                  parent:
+                    href: /templated
+                  "demo:append":
+                    href: "/items?type=hal{&q,sort}"
+                    templated: true
+                    title: "Append params to a URL already containing a query string"
+                  "demo:report":
+                    href: "/reports?scope=team{&from,to,format}"
+                    templated: true
+                    title: Fixed base params plus variable continuation
+                  "demo:paginate":
+                    href: "/search{?q}{&page,limit}"
+                    templated: true
+                    title: "Pair {?} with {&} — first param starts with ?, rest use &"
+                  "demo:list-expand":
+                    href: "/items?type=post{&tags*}"
+                    templated: true
+                    title: "Explode list * — each element its own &key=value appended"
+                title: "Form-Style Query Continuation — {&var}"
+                rfc_section: "3.2.9"
+                operator: "&"
+                rules:
+                  - Like {?var} but uses & as the leading separator (no leading ?)
+                  - Use when the template URL already has a query string or a preceding {?var}
+                  - Undefined variable is omitted
+                  - "Pair with a literal ? in the URL or a {?var} expression before it"
+                expansions:
+                  "{&q,sort} appended to ?type=hal": "/items?type=hal&q=hal&sort=name"
+                  "{&from,to,format}=2026-01,2026-06,csv": "/reports?scope=team&from=2026-01&to=2026-06&format=csv"
+                  "{?q}=hypertext + {&page,limit}=2,10": "/search?q=hypertext&page=2&limit=10"
+                  "{&tags*}=[news,tech] after ?type=post": "/items?type=post&tags=news&tags=tech"
+
+        # ── 2.4 Value modifiers: :maxlength and *explode ─────────────────────
+
+        /modifiers:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/modifiers
+                  parent:
+                    href: /templated
+                  "demo:prefix-id":
+                    href: "/cache/{etag:8}"
+                    templated: true
+                    title: "Prefix :N — truncate etag to first 8 characters before encoding"
+                  "demo:prefix-slug":
+                    href: "/posts/{slug:60}{?lang}"
+                    templated: true
+                    title: "Limit slug to 60 chars to guard against excessively long URLs"
+                  "demo:prefix-reserved":
+                    href: "/cache/{+url:15}"
+                    templated: true
+                    title: "Prefix :N with {+} — truncate to 15 chars, dots and slashes unencoded"
+                  "demo:prefix-label":
+                    href: "/doc{.mime:4}"
+                    templated: true
+                    title: "Prefix :N with {.} — truncate media type to 4 chars: .html not .html5"
+                  "demo:prefix-path":
+                    href: "/locale{/lang:2}"
+                    templated: true
+                    title: "Prefix :N with {/} — keep only first 2 chars: /locale/en from en-US"
+                  "demo:explode-list":
+                    href: "/items{?tags*}"
+                    templated: true
+                    title: "Explode list * — each tag its own param: ?tags=a&tags=b&tags=c"
+                  "demo:explode-path":
+                    href: "/tree{/segments*}"
+                    templated: true
+                    title: "Explode path * — each segment gets /: /tree/api/v2/users"
+                  "demo:explode-assoc":
+                    href: "/query{?filters*}"
+                    templated: true
+                    title: "Explode assoc array * — key=value pairs: ?status=active&role=admin"
+                title: "Value Modifiers — :maxlength and *explode"
+                rfc_section: "2.4"
+                modifiers:
+                  ":maxlength":
+                    syntax: "{var:N}"
+                    effect: Expand only the first N Unicode code points of the value
+                    note: Truncates before encoding; N must be a positive integer; strings only
+                  "*explode":
+                    syntax: "{var*}"
+                    effect: Expand composite values (lists, assoc arrays) as separate items
+                    note: Separator character depends on the operator (comma, slash, ampersand)
+                expansions:
+                  "{etag:8}=a1b2c3d4e5f6": /cache/a1b2c3d4
+                  "{slug:60}=very-long-slug-exceeding-sixty-chars-when-fully-written-out-here": "/posts/very-long-slug-exceeding-sixty-chars-when-fully-writ"
+                  "{+url:15}=api.example.com/resources": /cache/api.example.com
+                  "{.mime:4}=html5": /doc.html
+                  "{/lang:2}=en-US": /locale/en
+                  "{?tags*}=[hal,json,rest]": "/items?tags=hal&tags=json&tags=rest"
+                  "{/segments*}=[api,v2,users]": /tree/api/v2/users
+                  "{?filters*}={status:active,role:admin}": "/query?status=active&role=admin"
+
+        # ── Combined example ──────────────────────────────────────────────────
+
+        /combined:
+          method:
+            GET:
+              code: 200
+              headerOut:
+                Content-Type: application/hal+json
+              resource:
+                _links:
+                  self:
+                    href: /templated/combined
+                  parent:
+                    href: /templated
+                  "demo:content-api":
+                    href: "/api{/version}{/type,slug}{.format}{?q,locale}{&page,limit}{&fields*}"
+                    templated: true
+                    title: >-
+                      {/version} path segment + {/type,slug} path segments +
+                      {.format} extension + {?q,locale} query + {&page,limit} pagination +
+                      {&fields*} exploded field selection
+                  "demo:cdn-asset":
+                    href: "{+cdn}{/path*}{.ext}{?v:8}"
+                    templated: true
+                    title: >-
+                      {+cdn} reserved base URL + {/path*} exploded segments +
+                      {.ext} file extension + {?v:8} truncated version hash
+                  "demo:search-api":
+                    href: "/search{?q,type}{&filters*}{&page,limit,sort}"
+                    templated: true
+                    title: "{?q,type} keyword + type + {&filters*} arbitrary filters + {&page,limit,sort} pagination"
+                title: Combined URI Template Example
+                note: >-
+                  Real-world templates combine multiple expression types in one href.
+                  Operators apply left-to-right; each {expression} is independent.
+                  RFC 6570 client libraries handle expansion
+                  (e.g. std-uritemplate for Java/Kotlin, uri-template for JS).
+                expansions:
+                  content_api:
+                    template: "/api{/version}{/type,slug}{.format}{?q,locale}{&page,limit}{&fields*}"
+                    variables:
+                      version: v2
+                      type: articles
+                      slug: hal-intro
+                      format: json
+                      q: hypertext
+                      locale: en-US
+                      page: 2
+                      limit: 10
+                      fields: [title, summary, author]
+                    result: "/api/v2/articles/hal-intro.json?q=hypertext&locale=en-US&page=2&limit=10&fields=title&fields=summary&fields=author"
+                  cdn_asset:
+                    template: "{+cdn}{/path*}{.ext}{?v:8}"
+                    variables:
+                      cdn: "https://cdn.example.com"
+                      path: [images, avatars, user42]
+                      ext: webp
+                      v: a1b2c3d4e5f6
+                    result: "https://cdn.example.com/images/avatars/user42.webp?v=a1b2c3d4"
+                  search_api:
+                    template: "/search{?q,type}{&filters*}{&page,limit,sort}"
+                    variables:
+                      q: hal specification
+                      type: article
+                      filters: {status: published, lang: en}
+                      page: 1
+                      limit: 20
+                      sort: relevance
+                    result: "/search?q=hal%20specification&type=article&status=published&lang=en&page=1&limit=20&sort=relevance"

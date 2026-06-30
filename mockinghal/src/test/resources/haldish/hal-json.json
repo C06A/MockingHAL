@@ -1,0 +1,248 @@
+{
+  "json_samples": {
+    "path": {
+      "/json-samples": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/hal+json"
+            },
+            "resource": {
+              "_links": {
+                "self": {
+                  "href": "/json-samples",
+                  "type": "application/hal+json"
+                },
+                "parent": {
+                  "href": "/",
+                  "type": "application/hal+json"
+                },
+                "curies": [
+                  {
+                    "name": "doc",
+                    "href": "/docs/json-samples#{rel}",
+                    "templated": true
+                  }
+                ],
+                "doc:empty": {
+                  "href": "/json-samples/empty",
+                  "title": "No content (204)"
+                },
+                "doc:scalars": [
+                  {
+                    "href": "/json-samples/scalar/true",
+                    "name": "boolean-true",
+                    "title": "Boolean true"
+                  },
+                  {
+                    "href": "/json-samples/scalar/false",
+                    "name": "boolean-false",
+                    "title": "Boolean false"
+                  },
+                  {
+                    "href": "/json-samples/scalar/integer",
+                    "name": "integer",
+                    "title": "Integer"
+                  },
+                  {
+                    "href": "/json-samples/scalar/number",
+                    "name": "number",
+                    "title": "Number (float)"
+                  },
+                  {
+                    "href": "/json-samples/scalar/string",
+                    "name": "string",
+                    "title": "String"
+                  }
+                ],
+                "doc:json": {
+                  "href": "/json-samples/json",
+                  "title": "Multi-level JSON object"
+                },
+                "doc:array": {
+                  "href": "/json-samples/array",
+                  "title": "JSON array document"
+                }
+              },
+              "title": "JSON Samples",
+              "description": "Plain JSON examples — valid HAL resources that omit the optional _links and _embedded properties"
+            }
+          }
+        }
+      }
+    }
+  },
+  "json_samples_empty": {
+    "path": {
+      "/json-samples/empty": {
+        "method": {
+          "GET": {
+            "code": 204
+          }
+        }
+      }
+    }
+  },
+  "json_samples_scalar_true": {
+    "path": {
+      "/json-samples/scalar/true": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": true
+          }
+        }
+      }
+    }
+  },
+  "json_samples_scalar_false": {
+    "path": {
+      "/json-samples/scalar/false": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": false
+          }
+        }
+      }
+    }
+  },
+  "json_samples_scalar_integer": {
+    "path": {
+      "/json-samples/scalar/integer": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": 42
+          }
+        }
+      }
+    }
+  },
+  "json_samples_scalar_number": {
+    "path": {
+      "/json-samples/scalar/number": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": 3.14
+          }
+        }
+      }
+    }
+  },
+  "json_samples_scalar_string": {
+    "path": {
+      "/json-samples/scalar/string": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": "hello world"
+          }
+        }
+      }
+    }
+  },
+  "json_samples_json": {
+    "path": {
+      "/json-samples/json": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": {
+              "string": "hello",
+              "integer": 42,
+              "number": 3.14,
+              "boolean": true,
+              "null_value": null,
+              "nested": {
+                "key": "value",
+                "deeper": {
+                  "level": 3
+                }
+              },
+              "array": [
+                1,
+                "two",
+                true
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "json_samples_array": {
+    "path": {
+      "/json-samples/array": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/json"
+            },
+            "resource": [
+              true,
+              false,
+              42,
+              3.14,
+              "hello world",
+              {
+                "string": "hello",
+                "integer": 42,
+                "number": 3.14,
+                "boolean": true,
+                "null_value": null,
+                "nested": {
+                  "key": "value",
+                  "deeper": {
+                    "level": 3
+                  }
+                },
+                "array": [
+                  1,
+                  "two",
+                  true
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "json_samples_docs": {
+    "path": {
+      "/docs/json-samples": {
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "text/html"
+            },
+            "resource": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>JSON Samples — MockingHAL Demo Docs</title>\n  <style>\n    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }\n    h2 { border-bottom: 1px solid #ccc; padding-bottom: .25rem; }\n    code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; }\n    pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }\n  </style>\n</head>\n<body>\n<h1>JSON Samples</h1>\n<p>Plain JSON resources served by MockingHAL — no <code>_links</code>, no <code>_embedded</code>. These are still valid HAL: <code>_links</code> and <code>_embedded</code> are <em>optional</em> reserved properties, so any JSON document is a valid (if minimal) HAL resource.</p>\n\n<h2 id=\"empty\">empty</h2>\n<p>Returns <code>204 No Content</code> with an empty body. Useful for testing clients that handle no-body responses.</p>\n<pre>GET /json-samples/empty  →  204 No Content</pre>\n\n<h2 id=\"scalars\">scalars</h2>\n<p>Each endpoint returns a single JSON primitive value.</p>\n<ul>\n  <li><code>GET /json-samples/scalar/true</code> → <code>true</code></li>\n  <li><code>GET /json-samples/scalar/false</code> → <code>false</code></li>\n  <li><code>GET /json-samples/scalar/integer</code> → <code>42</code></li>\n  <li><code>GET /json-samples/scalar/number</code> → <code>3.14</code></li>\n  <li><code>GET /json-samples/scalar/string</code> → <code>hello world</code></li>\n</ul>\n\n<h2 id=\"json\">json</h2>\n<p>A multi-level JSON object with every primitive type, a nested object, and an array.</p>\n<pre>GET /json-samples/json  →  200 application/json\n{\n  \"string\": \"hello\",\n  \"integer\": 42,\n  \"number\": 3.14,\n  \"boolean\": true,\n  \"null_value\": null,\n  \"nested\": { \"key\": \"value\", \"deeper\": { \"level\": 3 } },\n  \"array\": [1, \"two\", true]\n}</pre>\n\n<h2 id=\"array\">array</h2>\n<p>A JSON array containing one of each primitive type plus the full JSON object above.</p>\n<pre>GET /json-samples/array  →  200 application/json\n[true, false, 42, 3.14, \"hello world\", { ... }]</pre>\n\n</body>\n</html>"
+          }
+        }
+      }
+    }
+  }
+}
