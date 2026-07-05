@@ -94,6 +94,17 @@ fun Application.module() {
     // POST / replaces this at runtime; PATCH / appends to it.
     loadDefaultResources()
 
+    // When the loaded configuration itself defines handlers for POST /, PATCH /,
+    // and DELETE / (all three), the built-in runtime config-management endpoints
+    // are disabled so those requests are served by the config instead of being
+    // interpreted as replace/append/reset operations. Evaluated once at startup.
+    val configOwnsRootMutations = listOf("POST", "PATCH", "DELETE").all { method ->
+        RequestMatcher.findMatch(ResourceRegistry.getAll(), method, "/", "", emptyMap(), "") != null
+    }
+    if (configOwnsRootMutations) {
+        println("INFO: config defines POST/PATCH/DELETE / — runtime config replacement is disabled")
+    }
+
     routing {
 
         // ── Config loading ────────────────────────────────────────────────────────
@@ -103,88 +114,95 @@ fun Application.module() {
         //   - a plain YAML or JSON body
         //   - multipart/form-data or multipart/mixed with one part per config block
         //     (parts are appended in order into a single resource map)
-        post("/") {
-            val contentType = call.request.contentType()
-            val combined    = LinkedHashMap<String, TreeNode>()
-            var parseError: String? = null
+        //
+        // These three endpoints are skipped entirely when [configOwnsRootMutations]
+        // is set, letting the catch-all routes below serve those methods from config.
+        if (!configOwnsRootMutations) {
+            post("/") {
+                val contentType = call.request.contentType()
+                val combined    = LinkedHashMap<String, TreeNode>()
+                var parseError: String? = null
 
-            if (contentType.match(ContentType.MultiPart.FormData) ||
-                contentType.match(ContentType.MultiPart.Mixed)) {
-                call.receiveMultipart().forEachPart { part ->
-                    if (parseError != null) { part.dispose(); return@forEachPart }
-                    val text = when (part) {
-                        is PartData.FileItem -> part.provider().toByteArray()
-                            .toString(Charsets.UTF_8).also { part.dispose() }
-                        is PartData.FormItem -> part.value.also { part.dispose() }
-                        else -> { part.dispose(); return@forEachPart }
+                if (contentType.match(ContentType.MultiPart.FormData) ||
+                    contentType.match(ContentType.MultiPart.Mixed)) {
+                    call.receiveMultipart().forEachPart { part ->
+                        if (parseError != null) { part.dispose(); return@forEachPart }
+                        val text = when (part) {
+                            is PartData.FileItem -> part.provider().toByteArray()
+                                .toString(Charsets.UTF_8).also { part.dispose() }
+                            is PartData.FormItem -> part.value.also { part.dispose() }
+                            else -> { part.dispose(); return@forEachPart }
+                        }
+                        ResourceRegistry.parseConfig(text)
+                            .onSuccess { combined.putAll(it) }
+                            .onFailure { parseError = it.message }
                     }
-                    ResourceRegistry.parseConfig(text)
+                } else {
+                    ResourceRegistry.parseConfig(call.receiveText())
                         .onSuccess { combined.putAll(it) }
                         .onFailure { parseError = it.message }
                 }
-            } else {
-                ResourceRegistry.parseConfig(call.receiveText())
-                    .onSuccess { combined.putAll(it) }
-                    .onFailure { parseError = it.message }
+
+                if (parseError != null) {
+                    call.respondText("Invalid config: $parseError", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+                ResourceRegistry.replace(combined)
+                call.respond(HttpStatusCode.Created)
             }
 
-            if (parseError != null) {
-                call.respondText("Invalid config: $parseError", status = HttpStatusCode.BadRequest)
-                return@post
-            }
+            // PATCH / appends the supplied config to the currently loaded resources.
+            // Existing entries whose top-level key collides with a new entry are replaced;
+            // all other entries are preserved.  Accepts the same content types as POST /.
+            patch("/") {
+                val contentType = call.request.contentType()
+                val combined    = LinkedHashMap<String, TreeNode>()
+                var parseError: String? = null
 
-            ResourceRegistry.replace(combined)
-            call.respond(HttpStatusCode.Created)
-        }
-
-        // PATCH / appends the supplied config to the currently loaded resources.
-        // Existing entries whose top-level key collides with a new entry are replaced;
-        // all other entries are preserved.  Accepts the same content types as POST /.
-        patch("/") {
-            val contentType = call.request.contentType()
-            val combined    = LinkedHashMap<String, TreeNode>()
-            var parseError: String? = null
-
-            if (contentType.match(ContentType.MultiPart.FormData) ||
-                contentType.match(ContentType.MultiPart.Mixed)) {
-                call.receiveMultipart().forEachPart { part ->
-                    if (parseError != null) { part.dispose(); return@forEachPart }
-                    val text = when (part) {
-                        is PartData.FileItem -> part.provider().toByteArray()
-                            .toString(Charsets.UTF_8).also { part.dispose() }
-                        is PartData.FormItem -> part.value.also { part.dispose() }
-                        else -> { part.dispose(); return@forEachPart }
+                if (contentType.match(ContentType.MultiPart.FormData) ||
+                    contentType.match(ContentType.MultiPart.Mixed)) {
+                    call.receiveMultipart().forEachPart { part ->
+                        if (parseError != null) { part.dispose(); return@forEachPart }
+                        val text = when (part) {
+                            is PartData.FileItem -> part.provider().toByteArray()
+                                .toString(Charsets.UTF_8).also { part.dispose() }
+                            is PartData.FormItem -> part.value.also { part.dispose() }
+                            else -> { part.dispose(); return@forEachPart }
+                        }
+                        ResourceRegistry.parseConfig(text)
+                            .onSuccess { combined.putAll(it) }
+                            .onFailure { parseError = it.message }
                     }
-                    ResourceRegistry.parseConfig(text)
+                } else {
+                    ResourceRegistry.parseConfig(call.receiveText())
                         .onSuccess { combined.putAll(it) }
                         .onFailure { parseError = it.message }
                 }
-            } else {
-                ResourceRegistry.parseConfig(call.receiveText())
-                    .onSuccess { combined.putAll(it) }
-                    .onFailure { parseError = it.message }
+
+                if (parseError != null) {
+                    call.respondText("Invalid config: $parseError", status = HttpStatusCode.BadRequest)
+                    return@patch
+                }
+
+                ResourceRegistry.append(combined)
+                call.respond(HttpStatusCode.OK)
             }
 
-            if (parseError != null) {
-                call.respondText("Invalid config: $parseError", status = HttpStatusCode.BadRequest)
-                return@patch
+            // DELETE / resets to the built-in default configuration.
+            delete("/") {
+                ResourceRegistry.replace(emptyMap())
+                loadDefaultResources()
+                call.respond(HttpStatusCode.NoContent)
             }
-
-            ResourceRegistry.append(combined)
-            call.respond(HttpStatusCode.OK)
-        }
-
-        // DELETE / resets to the built-in default configuration.
-        delete("/") {
-            ResourceRegistry.replace(emptyMap())
-            loadDefaultResources()
-            call.respond(HttpStatusCode.NoContent)
         }
 
         // ── Request matching ──────────────────────────────────────────────────────
         //
-        // All other requests are matched against the loaded tree.
-        // Declared after post("/") so that POST / always goes to the loader above.
+        // All other requests are matched against the loaded tree. Declared after the
+        // config-management routes so that, when those are registered, POST/PATCH/DELETE /
+        // reach the loader above; when they are skipped (configOwnsRootMutations), those
+        // methods fall through here and are served from config.
         // Two catch-all routes are needed: "{...}" for multi-segment paths, "/" for root.
         route("{...}") {
             handle { handleMatch(call) }
@@ -265,13 +283,60 @@ private fun loadCorsConfig(): CorsConfig {
 }
 
 /**
+ * Loads the startup configuration into [ResourceRegistry]. This is also what
+ * `DELETE /` resets to.
+ *
+ * When the `MOCKINGHAL_CONFIG` environment variable is set, its value is a
+ * [File.pathSeparator]-delimited list of files and/or directories loaded in
+ * place of the bundled defaults (directories are loaded alphabetically). This
+ * lets the server start from external configs without an initial `POST /`.
+ * If nothing loadable is found there, the bundled defaults are used instead so
+ * the server still boots.
+ *
+ * Otherwise the bundled `/default` classpath directory is loaded.
+ */
+private fun loadDefaultResources() {
+    val external = System.getenv("MOCKINGHAL_CONFIG")?.takeIf { it.isNotBlank() }
+    if (external != null && loadExternalResources(external)) return
+    loadBundledResources()
+}
+
+/**
+ * Loads config from a [File.pathSeparator]-delimited [spec] of files and/or
+ * directories, appending each to [ResourceRegistry] in order (directory entries
+ * alphabetically). Returns true when at least one config was loaded successfully.
+ */
+private fun loadExternalResources(spec: String): Boolean {
+    val files: List<File> = spec.split(File.pathSeparatorChar)
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .flatMap { path ->
+            val f = File(path)
+            when {
+                f.isDirectory -> f.listFiles()?.filter { it.isFile }?.sortedBy { it.name } ?: emptyList()
+                f.isFile      -> listOf(f)
+                else          -> { println("WARNING: MOCKINGHAL_CONFIG path not found: $path"); emptyList() }
+            }
+        }
+
+    var loaded = false
+    for (file in files) {
+        ResourceRegistry.parseConfig(file.readText())
+            .onSuccess { ResourceRegistry.append(it); loaded = true }
+            .onFailure { ex -> println("WARNING: failed to load ${file.path}: ${ex.message}") }
+    }
+    if (!loaded) println("WARNING: MOCKINGHAL_CONFIG loaded no resources — falling back to bundled defaults")
+    return loaded
+}
+
+/**
  * Loads every file found in the bundled `/default` classpath directory and
  * appends them to [ResourceRegistry] in alphabetical order.
  *
  * Works both when running from an exploded Gradle build (file: URLs) and
  * when packaged as a fat JAR (jar: URLs).
  */
-private fun loadDefaultResources() {
+private fun loadBundledResources() {
     val dirName = "default"
     val dirUrl  = Application::class.java.getResource("/$dirName") ?: run {
         println("WARNING: classpath directory /$dirName not found — no defaults loaded")

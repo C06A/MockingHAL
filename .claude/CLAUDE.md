@@ -62,8 +62,8 @@ Contains the recursive `TreeNode.match(…)` extension function. Matching semant
 
 ### `Application.kt`
 Ktor module setup:
-- On startup, loads all files from the `default/` classpath directory (alphabetically) into `ResourceRegistry` via `loadDefaultResources()`. Works both from an exploded build and from the fat JAR.
-- `POST /` replaces all loaded resources; `PATCH /` appends/overrides by top-level key; `DELETE /` resets to defaults. All three accept plain YAML/JSON or multipart bodies.
+- On startup, `loadDefaultResources()` populates `ResourceRegistry` (also what `DELETE /` resets to). If `MOCKINGHAL_CONFIG` is set, it loads that `File.pathSeparator`-delimited list of files/dirs (`loadExternalResources()`, dirs alphabetically) *in place of* the bundle, falling back to the bundle if none load; otherwise `loadBundledResources()` loads all files from the `default/` classpath directory (alphabetically). Bundled loading works both from an exploded build and from the fat JAR.
+- `POST /` replaces all loaded resources; `PATCH /` appends/overrides by top-level key; `DELETE /` resets to defaults. All three accept plain YAML/JSON or multipart bodies. **Exception:** if the loaded config itself matches all three of `POST /`, `PATCH /`, `DELETE /` (checked once at startup via `configOwnsRootMutations` = `findMatch` non-null for each), these management routes are *not registered* and those methods fall through to the catch-alls to be served from config.
 - Two catch-all routes (`{...}` and `/`) delegate to `handleMatch()`, which calls `RequestMatcher.findMatch()` and writes the `MatchResult` back as an HTTP response.
 - **CORS is hand-rolled here** (not the Ktor CORS plugin): `CorsConfig` data class + `loadCorsConfig()` + `wildcardOriginToRegex()`. An `intercept` adds `Access-Control-*` headers when the request `Origin` matches a configured pattern, and answers preflight `OPTIONS` (those carrying `Access-Control-Request-Method`) with 204. CORS is **independent** of the mock resource config — it is loaded once at startup and is *not* affected by `POST`/`PATCH`/`DELETE /`.
 

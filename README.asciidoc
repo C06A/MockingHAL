@@ -65,6 +65,42 @@ order of precedence (the first one set wins):
 If the configured value is not an integer in the range `1`–`65535`, MockingHAL
 logs a warning and falls back to the default port (8080).
 
+=== Starting from external config files
+
+By default MockingHAL loads its bundled self-description config on startup, and
+you replace it at runtime with `POST /`. To start directly from your own configs
+— without an initial upload — set the `MOCKINGHAL_CONFIG` environment variable to
+a list of files and/or directories, separated by the platform path separator
+(`:` on Linux/macOS, `;` on Windows):
+
+[source,bash]
+----
+# a single file
+MOCKINGHAL_CONFIG=/etc/mockinghal/api.yaml \
+  java -jar mockinghal-<version>-all.jar
+
+# several files and a directory (loaded left to right; a directory's
+# files are loaded alphabetically)
+MOCKINGHAL_CONFIG=/etc/mockinghal/api.yaml:/etc/mockinghal/extra \
+  java -jar mockinghal-<version>-all.jar
+----
+
+These configs *replace* the bundled defaults, and become what `DELETE /` resets
+to. Files may be YAML or JSON (auto-detected). A path that does not exist logs a
+warning and is skipped; if nothing loadable is found at all, MockingHAL falls
+back to the bundled defaults so the server still starts.
+
+==== Serving POST / PATCH / DELETE from config
+
+By default, `POST /`, `PATCH /`, and `DELETE /` are reserved for runtime
+configuration management (replace / append / reset — see below). If your loaded
+configuration defines its own handlers for **all three** of `POST /`, `PATCH /`,
+and `DELETE /`, MockingHAL disables the built-in management endpoints and serves
+those requests from your config instead. This lets you mock an API whose root
+responds to those methods. The check runs once at startup; if any of the three is
+missing, the management endpoints stay active. (`GET /` and every non-root path
+are always served from config regardless.)
+
 == Configuration format
 
 MockingHAL configuration is a YAML (or JSON) document that describes a tree of
