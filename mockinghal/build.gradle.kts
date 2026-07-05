@@ -85,6 +85,22 @@ tasks.register("checkPort") {
     }
 }
 
+tasks.register<JavaExec>("runHaldish") {
+    group = "application"
+    description = "Run the server with the HALDiSh sample configs (src/test/resources/haldish)"
+    mainClass.set(application.mainClass)
+    classpath = sourceSets["main"].runtimeClasspath
+    // Use the project's Java 21 toolchain (matching jvmToolchain(21)); otherwise this
+    // task would run on the Gradle daemon's JVM and fail on the newer class files.
+    javaLauncher.set(
+        javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) }
+    )
+    environment(
+        "MOCKINGHAL_CONFIG",
+        layout.projectDirectory.dir("src/test/resources/haldish").asFile.absolutePath,
+    )
+}
+
 tasks.register("setup") {
     group = "build"
     dependsOn(haldish)

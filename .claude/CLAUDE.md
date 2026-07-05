@@ -17,6 +17,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run the server standalone (after building); starts on port 8080
 java -jar mockinghal/build/libs/mockinghal-all.jar
 
+# Run from source with the HALDiSh sample configs preloaded (sets MOCKINGHAL_CONFIG
+# to src/test/resources/haldish so no POST / upload is needed); starts on port 8080
+./gradlew :mockinghal:runHaldish
+
 # See what is holding port 8080 (cross-platform lsof/netstat helper)
 ./gradlew :mockinghal:checkPort
 

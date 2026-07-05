@@ -44,6 +44,15 @@ root:
                 title: Embedded resource samples (HAL+XML, see hal_embedded.xml)
             title: HAL Features Demo Root
             description: Entry point for comprehensive HAL feature coverage across multiple formats
+        DELETE:
+          code: 204
+        POST:
+          code: 403
+          resource: "\"Method POST is not allowed\""
+        PATCH:
+          code: 403
+          resource: "\"Method PATCH is not allowed\""
+
 
 # ── Link field combinations ───────────────────────────────────────────────────
 
@@ -60,148 +69,201 @@ links:
               self:
                 href: /links
                 type: application/hal+json
-              parent:
-                href: /
-                type: application/hal+json
-              curies:
-                - name: doc
-                  href: "/docs#{rel}"
-                  templated: true
-              "doc:simple":
-                href: /link-simple
+              "simple":
+                href: /links/simple
                 type: application/hal+json
                 title: Simple link — href and type only
-              "doc:complete":
-                href: /link-complete
+              "complete":
+                href: /links/complete
                 type: application/hal+json
-                title: Complete link — all optional fields
-              "doc:deprecated":
-                href: /link-deprecated
+                name: Complete link
+                title: Complete link — all optional fields except deprecated
+              "deprecated":
+                href: /links/deprecated
                 type: application/hal+json
                 title: Link with deprecation marker
-              "doc:array":
-                href: /link-array
+                deprecation: /docs#deprecated
+              "array":
+                href: /links/array
                 type: application/hal+json
                 title: Array of links under one relation
-              "doc:curies":
-                href: /link-curies
+              "curies":
+                href: /links/curies
                 type: application/hal+json
                 title: CURIE prefixes (rel) and SafeCURIE hrefs
-              "doc:complex":
+              "complex":
                 href: /complex-hal
                 type: application/hal+json
                 title: Complex HAL document — links, curies, embedded, deep nesting
             title: Link Field Combinations
             description: HAL link objects demonstrating different combinations of optional fields
+          path:
+            "":
+              resource:
+                _links:
+                  self:
+                    href: /links
+                    type: application/hal+json
+                  "simple":
+                    href: /links/simple
+                    type: application/hal+json
+                    title: Simple link — href and type only
+                  "complete":
+                    href: /links/complete
+                    type: application/hal+json
+                    name: Complete link
+                    title: Complete link — all optional fields except deprecation
+                  "deprecated":
+                    href: /links/deprecated
+                    type: application/hal+json
+                    title: Link with deprecation marker
+                    deprecation: /docs#deprecated
+                  "doc:array":
+                    href: /links/array
+                    type: application/hal+json
+                    title: Array of links under one relation
+                  "doc:curies":
+                    href: /links/curies
+                    type: application/hal+json
+                    title: CURIE prefixes (rel) and SafeCURIE hrefs
+                  "doc:complex":
+                    href: /complex-hal
+                    type: application/hal+json
+                    title: Complex HAL document — links, curies, embedded, deep nesting
+                title: Link Field Combinations
+                description: HAL link objects demonstrating different combinations of optional fields
+            /simple:
+              resource:
+                _links:
+                  self:
+                    href: /links/simple
+                    type: application/hal+json
+                  sample:
+                    href: /links/simple
+                    type: application/hal+json
+                title: Simple Link
+                note: Minimal non-self link object — href and type. Type hints the media type of the target resource. Check "sample" link
+            /complete:
+              resource:
+                _links:
+                  self:
+                    href: /links/complete
+                    type: application/hal+json
+                  sample:
+                    href: /links/complete{?query}
+                    type: application/hal+json
+                    templated: true
+                    name: complete variant
+                    title: The link with all optional fields except deprecated. Check "sample" link
+                    hreflang: en
+                    profile: Profile name
+                title: Complete Link Object
+                note: All optional link fields in use — type, name, title, hreflang. See /links/deprecated for deprecation.
+            /deprecated:
+              resource:
+                _links:
+                  self:
+                    href: /links/deprecated
+                  curies:
+                    - href: /docs#{rel}
+                      templated: true
+                      name: doc
+                  CURIE:
+                    - href: /docs#
+                      name: doc
+                  doc:deprecated:
+                    href: /links/deprecated
+                    type: application/hal+json
+                    title: Use this instead
+                    deprecation: "[doc:deprecated]"
+                title: Deprecated Link
+                note: The deprecation field is a URL pointing to information about why the link is deprecated and what to use instead. Check "deprecated" link
+            /array:
+              resource:
+                _links:
+                  self:
+                    href: /links/array
+                  array:
+                    - href: /links/simple
+                      name: simple
+                      title: Simple link
+                    - href: /links/complete
+                      name: complete
+                      title: Complete link with all fields
+                    - href: /links/deprecated
+                      name: deprecated
+                      title: Link with deprecation marker
+                title: Array of Links
+                note: Multiple links sharing one relation type, distinguished by name. HAL allows any link relation to be either a single object or an array. Check "array" link
+            /curies:
+              # ── CURIE prefixes (rel) and SafeCURIE href shortening ────────────────────────
+              # Two distinct compaction mechanisms in one resource:
+              #
+              #   curies (lowercase, HAL reserved relation)
+              #       Array of prefix definitions for link RELATION names.  A compact rel
+              #       "doc:xxx" is documented at the expanded curies href ("/docs/curies#xxx").
+              #       Entries are URI Templates (templated: true) with a {rel} placeholder.
+              #
+              #   CURIE (uppercase, W3C CURIE Syntax 1.0)
+              #       Array of prefix definitions used inside link HREFs.  A SafeCURIE
+              #       "[prefix:reference]" in an href expands to (prefix URI + reference) by
+              #       plain concatenation — so href targets stay short.  Entries are plain
+              #       prefix→URI mappings: NO templated flag and NO template expression.
+              #
+              # NOTE: MockingHAL serves these literal strings as-is; it does not expand
+              # CURIEs at runtime.  Expansion is the client's responsibility (shown in the
+              # curie_expansions block and on /docs/curies).
+              resource:
+                _links:
+                  self:
+                    href: /links/curies
 
-link_simple:
-  path:
-    /link-simple:
-      method:
-        GET:
-          code: 200
-          headerOut:
-            Content-Type: application/hal+json
-          resource:
-            _links:
-              self:
-                href: /link-simple
-              parent:
-                href: /links
-              next:
-                href: /link-complete
-                type: application/hal+json
-                title: Complete link — all optional fields
-            title: Simple Link
-            note: Minimal non-self link object — href and type. type hints the media type of the target resource.
+                  # curies — prefixes for the RELATION names below; each compact
+                  # "doc:xxx" rel is documented at /docs/curies#xxx.
+                  curies:
+                    - name: doc
+                      href: "/docs/curies#{rel}"
+                      templated: true
 
-link_complete:
-  path:
-    /link-complete:
-      method:
-        GET:
-          code: 200
-          headerOut:
-            Content-Type: application/hal+json
-          resource:
-            _links:
-              self:
-                href: /link-complete
-              parent:
-                href: /links
-              prev:
-                href: /link-simple
-                type: application/hal+json
-                title: Simple link
-              next:
-                href: /link-deprecated
-                type: application/hal+json
-                title: Link with deprecation marker
-              related:
-                href: /link-array
-                type: application/hal+json
-                name: array-variant
-                title: Array of links under one relation
-                hreflang: en
-            title: Complete Link Object
-            note: All optional link fields in use — type, name, title, hreflang. See /link-deprecated for deprecation.
+                  # CURIE — prefixes used to shorten the HREF values below.
+                  # Plain prefix→URI mappings; a SafeCURIE "[prefix:reference]" in an
+                  # href expands to (prefix URI + reference).  No template expression.
+                  CURIE:
+                    - name: hal
+                      href: "https://stateless.group/"
+                    - name: api
+                      href: "https://api.example.com/v2/"
 
-link_deprecated:
-  path:
-    /link-deprecated:
-      method:
-        GET:
-          code: 200
-          headerOut:
-            Content-Type: application/hal+json
-          resource:
-            _links:
-              self:
-                href: /link-deprecated
-              parent:
-                href: /links
-              prev:
-                href: /link-complete
-                type: application/hal+json
-                title: Complete link — all optional fields
-              successor:
-                href: /link-complete
-                type: application/hal+json
-                title: Use this instead
-                deprecation: /docs#deprecated
-            title: Deprecated Link
-            note: The deprecation field is a URL pointing to information about why the link is deprecated and what to use instead.
-
-link_array:
-  path:
-    /link-array:
-      method:
-        GET:
-          code: 200
-          headerOut:
-            Content-Type: application/hal+json
-          resource:
-            _links:
-              self:
-                href: /link-array
-              parent:
-                href: /links
-              item:
-                - href: /link-simple
-                  name: simple
-                  title: Simple link
-                - href: /link-complete
-                  name: complete
-                  title: Complete link with all fields
-                - href: /link-deprecated
-                  name: deprecated
-                  title: Link with deprecation marker
-            title: Array of Links
-            note: Multiple links sharing one relation type, distinguished by name. HAL allows any link relation to be either a single object or an array.
+                  # ── links combining a CURIE rel with a SafeCURIE href ──────────
+                  "doc:spec":
+                    href: "[hal:hal_specification.html]"
+                    type: text/html
+                    title: "HAL specification — href shortened via the hal: CURIE"
+                  "doc:item":
+                    href: "[api:items/42]"
+                    type: application/hal+json
+                    title: "Single API item — href shortened via the api: CURIE"
+                  "doc:collection":
+                    href: "[api:items]"
+                    type: application/hal+json
+                    title: "API item collection — href shortened via the api: CURIE"
+                title: CURIE Prefixes and SafeCURIE Hrefs
+                note: >-
+                  curies (lowercase) compact link RELATION names and resolve to their
+                  documentation; CURIE (uppercase) compact link HREF values using
+                  SafeCURIE [prefix:reference] notation.  A client resolves a rel by
+                  matching its prefix against curies, and an href by matching its
+                  [prefix:…] against CURIE, concatenating the prefix URI with the
+                  reference.  See /docs/curies for the full explanation.
+                curie_expansions:
+                  "rel doc:spec": "/docs/curies#spec  (via curies doc:)"
+                  "href [hal:hal_specification.html]": "https://stateless.group/hal_specification.html"
+                  "href [api:items/42]": "https://api.example.com/v2/items/42"
+                  "href [api:items]": "https://api.example.com/v2/items"
 
 # ── Complex HAL document ──────────────────────────────────────────────────────
 # A single resource exercising many HAL features at once:
-#   _links     — self, parent, curies, a templated link, and a link array (related)
+#   _links     — self, curies, a templated link
 #   _embedded  — a collection (doc:items, an array) plus a single resource (doc:author)
 #   nesting    — an embedded item carries its own _embedded (doc:variants), and the
 #                author carries an embedded organisation (doc:org): embedding composes
@@ -220,8 +282,6 @@ complex_hal:
             _links:
               self:
                 href: /complex-hal
-              parent:
-                href: /links
               curies:
                 - name: doc
                   href: "/docs#{rel}"
@@ -233,13 +293,6 @@ complex_hal:
               "doc:author":
                 href: /complex-hal/author
                 title: The author resource
-              related:
-                - href: /link-array
-                  name: array
-                  title: Array of links
-                - href: /link-curies
-                  name: curies
-                  title: CURIE demonstration
             title: Complex HAL Document
             description: >-
               One resource combining links, curies, a templated link, a link array,
@@ -298,178 +351,9 @@ complex_hal:
                     name: ACME Corp
                     tier: gold
 
-# ── CURIE prefixes (rel) and SafeCURIE href shortening ────────────────────────
-# Two distinct compaction mechanisms in one resource:
-#
-#   curies (lowercase, HAL reserved relation)
-#       Array of prefix definitions for link RELATION names.  A compact rel
-#       "doc:xxx" is documented at the expanded curies href ("/docs/curies#xxx").
-#       Entries are URI Templates (templated: true) with a {rel} placeholder.
-#
-#   CURIE (uppercase, W3C CURIE Syntax 1.0)
-#       Array of prefix definitions used inside link HREFs.  A SafeCURIE
-#       "[prefix:reference]" in an href expands to (prefix URI + reference) by
-#       plain concatenation — so href targets stay short.  Entries are plain
-#       prefix→URI mappings: NO templated flag and NO template expression.
-#
-# NOTE: MockingHAL serves these literal strings as-is; it does not expand
-# CURIEs at runtime.  Expansion is the client's responsibility (shown in the
-# curie_expansions block and on /docs/curies).
-
-link_curies:
-  path:
-    /link-curies:
-      method:
-        GET:
-          code: 200
-          headerOut:
-            Content-Type: application/hal+json
-          resource:
-            _links:
-              self:
-                href: /link-curies
-              parent:
-                href: /links
-
-              # curies — prefixes for the RELATION names below; each compact
-              # "doc:xxx" rel is documented at /docs/curies#xxx.
-              curies:
-                - name: doc
-                  href: "/docs/curies#{rel}"
-                  templated: true
-
-              # CURIE — prefixes used to shorten the HREF values below.
-              # Plain prefix→URI mappings; a SafeCURIE "[prefix:reference]" in an
-              # href expands to (prefix URI + reference).  No template expression.
-              CURIE:
-                - name: hal
-                  href: "https://stateless.group/"
-                - name: api
-                  href: "https://api.example.com/v2/"
-
-              # ── links combining a CURIE rel with a SafeCURIE href ──────────
-              "doc:spec":
-                href: "[hal:hal_specification.html]"
-                type: text/html
-                title: "HAL specification — href shortened via the hal: CURIE"
-              "doc:item":
-                href: "[api:items/42]"
-                type: application/hal+json
-                title: "Single API item — href shortened via the api: CURIE"
-              "doc:collection":
-                href: "[api:items]"
-                type: application/hal+json
-                title: "API item collection — href shortened via the api: CURIE"
-            title: CURIE Prefixes and SafeCURIE Hrefs
-            note: >-
-              curies (lowercase) compact link RELATION names and resolve to their
-              documentation; CURIE (uppercase) compact link HREF values using
-              SafeCURIE [prefix:reference] notation.  A client resolves a rel by
-              matching its prefix against curies, and an href by matching its
-              [prefix:…] against CURIE, concatenating the prefix URI with the
-              reference.  See /docs/curies for the full explanation.
-            curie_expansions:
-              "rel doc:spec": "/docs/curies#spec  (via curies doc:)"
-              "href [hal:hal_specification.html]": "https://stateless.group/hal_specification.html"
-              "href [api:items/42]": "https://api.example.com/v2/items/42"
-              "href [api:items]": "https://api.example.com/v2/items"
-
-# ── CURIE documentation page ──────────────────────────────────────────────────
-# The dedicated page the curies prefixes resolve to (/docs/curies#{rel}).
-# Declared before the /docs overview below so the more specific /docs/curies
-# path is matched first (roots are tried in document order, and /docs prefix-
-# matches /docs/curies).
-
-curies_docs:
-  path:
-    /docs/curies:
-      method:
-        GET:
-          code: 200
-          headerOut:
-            Content-Type: text/html; charset=utf-8
-          resource: |
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-              <meta charset="UTF-8">
-              <title>CURIEs — MockingHAL HAL Demo Docs</title>
-              <style>
-                body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
-                h2 { border-bottom: 2px solid #3b82f6; padding-bottom: .3rem; margin-top: 2.5rem; color: #1e40af; }
-                h3 { margin-top: 1.5rem; color: #374151; }
-                code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
-                pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: .85em; }
-                table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-                th, td { border: 1px solid #d1d5db; padding: .4rem .6rem; text-align: left; font-size: .9em; }
-                th { background: #eff6ff; }
-                a { color: #2563eb; }
-              </style>
-            </head>
-            <body>
-            <h1>CURIEs in HAL</h1>
-            <p>
-              A <strong>CURIE</strong> (Compact URI) is a short <code>prefix:reference</code> token that
-              stands in for a longer URI. A prefix is mapped to a base URI; the full URI is the prefix's
-              URI concatenated with the reference. This page documents the two compaction mechanisms used
-              by <a href="/link-curies">/link-curies</a>.
-            </p>
-
-            <h2 id="curies">curies — compacting link relations</h2>
-            <p>
-              <code>curies</code> (lowercase) is HAL's reserved link relation. It is an array of link
-              objects, each a URI Template (<code>templated: true</code>) with a <code>{rel}</code>
-              placeholder. A compact relation such as <code>doc:spec</code> is documented at the template
-              expanded with the reference part of the rel.
-            </p>
-            <pre>"curies": [
-              { "name": "doc", "href": "/docs/curies#{rel}", "templated": true }
-            ],
-            "doc:spec": { "href": "[hal:hal_specification.html]", "title": "…" }
-
-            rel  doc:spec   →   documentation at  /docs/curies#spec</pre>
-
-            <h2 id="CURIE">CURIE — compacting link hrefs (SafeCURIE)</h2>
-            <p>
-              <code>CURIE</code> (uppercase, singular) is an array of plain prefix→URI mappings —
-              <strong>no template expression</strong>. Its prefixes are used inside link <code>href</code>
-              values in <a href="https://www.w3.org/TR/curie/">SafeCURIE</a> notation:
-              <code>[prefix:reference]</code>. The href expands by simple concatenation of the prefix URI
-              and the reference, keeping target URLs short.
-            </p>
-            <pre>"CURIE": [
-              { "name": "hal", "href": "https://stateless.group/" },
-              { "name": "api", "href": "https://api.example.com/v2/" }
-            ]</pre>
-            <table>
-              <tr><th>SafeCURIE href</th><th>Prefix URI</th><th>Expands to</th></tr>
-              <tr><td><code>[hal:hal_specification.html]</code></td><td>https://stateless.group/</td><td>https://stateless.group/hal_specification.html</td></tr>
-              <tr><td><code>[api:items/42]</code></td><td>https://api.example.com/v2/</td><td>https://api.example.com/v2/items/42</td></tr>
-              <tr><td><code>[api:items]</code></td><td>https://api.example.com/v2/</td><td>https://api.example.com/v2/items</td></tr>
-            </table>
-
-            <h3 id="spec">spec</h3>
-            <p>The <code>doc:spec</code> link points (via the <code>hal:</code> CURIE) at the HAL specification.</p>
-            <h3 id="item">item</h3>
-            <p>The <code>doc:item</code> link addresses a single API resource via the <code>api:</code> CURIE.</p>
-            <h3 id="collection">collection</h3>
-            <p>The <code>doc:collection</code> link addresses the API item collection via the <code>api:</code> CURIE.</p>
-
-            <h2>curies vs CURIE</h2>
-            <table>
-              <tr><th></th><th>curies (lowercase)</th><th>CURIE (uppercase)</th></tr>
-              <tr><td>Compacts</td><td>link relation names</td><td>link href values</td></tr>
-              <tr><td>Used in</td><td>the rel (map key)</td><td>the href value</td></tr>
-              <tr><td>Form</td><td>URI Template with {rel}</td><td>plain prefix→URI (no template)</td></tr>
-              <tr><td>Reference syntax</td><td><code>prefix:name</code></td><td><code>[prefix:reference]</code> (SafeCURIE)</td></tr>
-              <tr><td>Resolves to</td><td>documentation</td><td>the actual target URL</td></tr>
-            </table>
-
-            <p><a href="/link-curies">← Back to /link-curies</a></p>
-            </body>
-            </html>
-
-# ── Overview documentation ────────────────────────────────────────────────────
+# ── documentation pages ──────────────────────────────────────────────────
+# Overview documentation page and the dedicated page
+# the curies prefixes resolve to (/docs/curies#{rel}).
 
 docs:
   path:
@@ -478,114 +362,187 @@ docs:
         GET:
           code: 200
           headerOut:
-            Content-Type: text/html
-          resource: |
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-              <meta charset="UTF-8">
-              <title>MockingHAL HAL Demo — Documentation</title>
-              <style>
-                body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
-                h2 { border-bottom: 2px solid #3b82f6; padding-bottom: .3rem; margin-top: 2.5rem; color: #1e40af; }
-                h3 { margin-top: 1.5rem; color: #374151; }
-                code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
-                pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: .85em; }
-                a { color: #2563eb; }
-                nav { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: .75rem 1rem; margin-bottom: 2rem; }
-                nav a { display: inline-block; margin-right: 1.2rem; }
-                .pill { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 12px; padding: .1rem .6rem; font-size: .8em; font-family: monospace; }
-              </style>
-            </head>
-            <body>
-            <h1>MockingHAL HAL Demo — Documentation</h1>
-            <p>
-              This demo server illustrates the <a href="https://stateless.group/hal_specification.html">HAL (Hypertext Application Language)</a>
-              specification through live endpoints. All resources are served by <strong>MockingHAL</strong> from YAML/JSON/XML config files.
-              Start at <code>GET /</code> and follow links.
-            </p>
+            Content-Type: text/html; charset=utf-8
+          path:
+            "":
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <title>MockingHAL HAL Demo — Documentation</title>
+                  <style>
+                    body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
+                    h2 { border-bottom: 2px solid #3b82f6; padding-bottom: .3rem; margin-top: 2.5rem; color: #1e40af; }
+                    h3 { margin-top: 1.5rem; color: #374151; }
+                    code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
+                    pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: .85em; }
+                    a { color: #2563eb; }
+                    nav { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: .75rem 1rem; margin-bottom: 2rem; }
+                    nav a { display: inline-block; margin-right: 1.2rem; }
+                    .pill { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 12px; padding: .1rem .6rem; font-size: .8em; font-family: monospace; }
+                  </style>
+                </head>
+                <body>
+                <h1>MockingHAL HAL Demo — Documentation</h1>
+                <p>
+                  This demo server illustrates the <a href="https://stateless.group/hal_specification.html">HAL (Hypertext Application Language)</a>
+                  specification through live endpoints. All resources are served by <strong>MockingHAL</strong> from YAML/JSON/XML config files.
+                  Start at <code>GET /</code> and follow links.
+                </p>
+    
+                <nav>
+                  <strong>Sections:</strong>
+                  <a href="#links">Links</a>
+                  <a href="#simple">simple</a>
+                  <a href="#complete">complete</a>
+                  <a href="#deprecated">deprecated</a>
+                  <a href="#array">array</a>
+                  <a href="#json-samples">JSON Samples</a>
+                </nav>
+    
+                <h2 id="links">Link Field Combinations <span class="pill">GET /links</span></h2>
+                <p>
+                  A HAL link object must have <code>href</code>. All other fields are optional.
+                  The four resources below each highlight a different aspect of link objects.
+                </p>
+                <ul>
+                  <li><a href="#simple">/links/simple</a> — <code>href</code> + <code>type</code> only</li>
+                  <li><a href="#complete">/links/complete</a> — all optional fields</li>
+                  <li><a href="#deprecated">/links/deprecated</a> — the <code>deprecation</code> field</li>
+                  <li><a href="#array">/links/array</a> — array of links under one relation</li>
+                </ul>
+    
+                <h3 id="simple">simple <span class="pill">GET /links/simple</span></h3>
+                <p>The minimal useful link: <code>href</code> tells the client where to go, <code>type</code> hints at the media type to expect.</p>
+                <pre>{
+                  "_links": {
+                    "self":   { "href": "/links/simple" }
+                  }
+                }</pre>
+    
+                <h3 id="complete">complete <span class="pill">GET /links/complete</span></h3>
+                <p>All optional fields on a link object: <code>type</code>, <code>name</code>, <code>title</code>, <code>hreflang</code>.</p>
+    
+                <h3 id="deprecated">deprecated <span class="pill">GET /links/deprecated</span></h3>
+                <p>
+                  The <code>deprecation</code> field is a URL pointing to information about why a link is deprecated
+                  and what clients should use instead. Its presence signals that the link relation should no longer be used.
+                </p>
+                <pre>{
+                  "successor": {
+                    "href":        "/links/complete",
+                    "type":        "application/hal+json",
+                    "title":       "Use this instead",
+                    "deprecation": "/docs#deprecated"
+                  }
+                }</pre>
+    
+                <h3 id="array">array <span class="pill">GET /links/array</span></h3>
+                <p>
+                  Any link relation in HAL can be either a single link object or an array of link objects.
+                  When multiple targets share the same relation, use <code>name</code> to distinguish them.
+                </p>
+                <pre>{
+                  "item": [
+                    { "href": "/links/simple",     "name": "simple" },
+                    { "href": "/links/complete",   "name": "complete" },
+                    { "href": "/links/deprecated", "name": "deprecated" }
+                  ]
+                }</pre>
+    
+                <h2 id="json-samples">JSON Samples <span class="pill">GET /json-samples</span></h2>
+                <p>
+                  Plain JSON responses with no <code>_links</code> or <code>_embedded</code>. These are still
+                  valid HAL — <code>_links</code> and <code>_embedded</code> are <em>optional</em> reserved
+                  properties, so any JSON document is already a valid (if minimal) HAL resource; adding links
+                  and embedded resources simply makes it more useful.
+                  Demonstrates scalar primitives (<code>true</code>, <code>false</code>, integer, number, string),
+                  a multi-level object, and an array document.
+                  See <a href="/docs/json-samples">/docs/json-samples</a> for details.
+                </p>
+    
+                </body>
+                </html>
 
-            <nav>
-              <strong>Sections:</strong>
-              <a href="#links">Links</a>
-              <a href="#simple">simple</a>
-              <a href="#complete">complete</a>
-              <a href="#deprecated">deprecated</a>
-              <a href="#array">array</a>
-              <a href="#json-samples">JSON Samples</a>
-            </nav>
-
-            <h2 id="links">Link Field Combinations <span class="pill">GET /links</span></h2>
-            <p>
-              A HAL link object must have <code>href</code>. All other fields are optional.
-              The four resources below each highlight a different aspect of link objects.
-            </p>
-            <ul>
-              <li><a href="#simple">/link-simple</a> — <code>href</code> + <code>type</code> only</li>
-              <li><a href="#complete">/link-complete</a> — all optional fields</li>
-              <li><a href="#deprecated">/link-deprecated</a> — the <code>deprecation</code> field</li>
-              <li><a href="#array">/link-array</a> — array of links under one relation</li>
-            </ul>
-
-            <h3 id="simple">simple <span class="pill">GET /link-simple</span></h3>
-            <p>The minimal useful link: <code>href</code> tells the client where to go, <code>type</code> hints at the media type to expect.</p>
-            <pre>{
-              "_links": {
-                "self":   { "href": "/link-simple" },
-                "parent": { "href": "/links" },
-                "next":   { "href": "/link-complete", "type": "application/hal+json" }
-              }
-            }</pre>
-
-            <h3 id="complete">complete <span class="pill">GET /link-complete</span></h3>
-            <p>All optional fields on a link object: <code>type</code>, <code>name</code>, <code>title</code>, <code>hreflang</code>.</p>
-            <pre>{
-              "related": {
-                "href":     "/link-array",
-                "type":     "application/hal+json",
-                "name":     "array-variant",
-                "title":    "Array of links under one relation",
-                "hreflang": "en"
-              }
-            }</pre>
-
-            <h3 id="deprecated">deprecated <span class="pill">GET /link-deprecated</span></h3>
-            <p>
-              The <code>deprecation</code> field is a URL pointing to information about why a link is deprecated
-              and what clients should use instead. Its presence signals that the link relation should no longer be used.
-            </p>
-            <pre>{
-              "successor": {
-                "href":        "/link-complete",
-                "type":        "application/hal+json",
-                "title":       "Use this instead",
-                "deprecation": "/docs#deprecated"
-              }
-            }</pre>
-
-            <h3 id="array">array <span class="pill">GET /link-array</span></h3>
-            <p>
-              Any link relation in HAL can be either a single link object or an array of link objects.
-              When multiple targets share the same relation, use <code>name</code> to distinguish them.
-            </p>
-            <pre>{
-              "item": [
-                { "href": "/link-simple",     "name": "simple" },
-                { "href": "/link-complete",   "name": "complete" },
-                { "href": "/link-deprecated", "name": "deprecated" }
-              ]
-            }</pre>
-
-            <h2 id="json-samples">JSON Samples <span class="pill">GET /json-samples</span></h2>
-            <p>
-              Plain JSON responses with no <code>_links</code> or <code>_embedded</code>. These are still
-              valid HAL — <code>_links</code> and <code>_embedded</code> are <em>optional</em> reserved
-              properties, so any JSON document is already a valid (if minimal) HAL resource; adding links
-              and embedded resources simply makes it more useful.
-              Demonstrates scalar primitives (<code>true</code>, <code>false</code>, integer, number, string),
-              a multi-level object, and an array document.
-              See <a href="/docs/json-samples">/docs/json-samples</a> for details.
-            </p>
-
-            </body>
-            </html>
+            /curies:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <title>CURIEs — MockingHAL HAL Demo Docs</title>
+                  <style>
+                    body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
+                    h2 { border-bottom: 2px solid #3b82f6; padding-bottom: .3rem; margin-top: 2.5rem; color: #1e40af; }
+                    h3 { margin-top: 1.5rem; color: #374151; }
+                    code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
+                    pre  { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: .85em; }
+                    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+                    th, td { border: 1px solid #d1d5db; padding: .4rem .6rem; text-align: left; font-size: .9em; }
+                    th { background: #eff6ff; }
+                    a { color: #2563eb; }
+                  </style>
+                </head>
+                <body>
+                <h1>CURIEs in HAL</h1>
+                <p>
+                  A <strong>CURIE</strong> (Compact URI) is a short <code>prefix:reference</code> token that
+                  stands in for a longer URI. A prefix is mapped to a base URI; the full URI is the prefix's
+                  URI concatenated with the reference. This page documents the two compaction mechanisms used
+                  by <a href="/links/curies">/links/curies</a>.
+                </p>
+    
+                <h2 id="curies">curies — compacting link relations</h2>
+                <p>
+                  <code>curies</code> (lowercase) is HAL's reserved link relation. It is an array of link
+                  objects, each a URI Template (<code>templated: true</code>) with a <code>{rel}</code>
+                  placeholder. A compact relation such as <code>doc:spec</code> is documented at the template
+                  expanded with the reference part of the rel.
+                </p>
+                <pre>"curies": [
+                  { "name": "doc", "href": "/docs/curies#{rel}", "templated": true }
+                ],
+                "doc:spec": { "href": "[hal:hal_specification.html]", "title": "…" }
+    
+                rel  doc:spec   →   documentation at  /docs/curies#spec</pre>
+    
+                <h2 id="CURIE">CURIE — compacting link hrefs (SafeCURIE)</h2>
+                <p>
+                  <code>CURIE</code> (uppercase, singular) is an array of plain prefix→URI mappings —
+                  <strong>no template expression</strong>. Its prefixes are used inside link <code>href</code>
+                  values in <a href="https://www.w3.org/TR/curie/">SafeCURIE</a> notation:
+                  <code>[prefix:reference]</code>. The href expands by simple concatenation of the prefix URI
+                  and the reference, keeping target URLs short.
+                </p>
+                <pre>"CURIE": [
+                  { "name": "hal", "href": "https://stateless.group/" },
+                  { "name": "api", "href": "https://api.example.com/v2/" }
+                ]</pre>
+                <table>
+                  <tr><th>SafeCURIE href</th><th>Prefix URI</th><th>Expands to</th></tr>
+                  <tr><td><code>[hal:hal_specification.html]</code></td><td>https://stateless.group/</td><td>https://stateless.group/hal_specification.html</td></tr>
+                  <tr><td><code>[api:items/42]</code></td><td>https://api.example.com/v2/</td><td>https://api.example.com/v2/items/42</td></tr>
+                  <tr><td><code>[api:items]</code></td><td>https://api.example.com/v2/</td><td>https://api.example.com/v2/items</td></tr>
+                </table>
+    
+                <h3 id="spec">spec</h3>
+                <p>The <code>doc:spec</code> link points (via the <code>hal:</code> CURIE) at the HAL specification.</p>
+                <h3 id="item">item</h3>
+                <p>The <code>doc:item</code> link addresses a single API resource via the <code>api:</code> CURIE.</p>
+                <h3 id="collection">collection</h3>
+                <p>The <code>doc:collection</code> link addresses the API item collection via the <code>api:</code> CURIE.</p>
+    
+                <h2>curies vs CURIE</h2>
+                <table>
+                  <tr><th></th><th>curies (lowercase)</th><th>CURIE (uppercase)</th></tr>
+                  <tr><td>Compacts</td><td>link relation names</td><td>link href values</td></tr>
+                  <tr><td>Used in</td><td>the rel (map key)</td><td>the href value</td></tr>
+                  <tr><td>Form</td><td>URI Template with {rel}</td><td>plain prefix→URI (no template)</td></tr>
+                  <tr><td>Reference syntax</td><td><code>prefix:name</code></td><td><code>[prefix:reference]</code> (SafeCURIE)</td></tr>
+                  <tr><td>Resolves to</td><td>documentation</td><td>the actual target URL</td></tr>
+                </table>
+    
+                <p><a href="/links/curies">← Back to /links/curies</a></p>
+                </body>
+                </html>

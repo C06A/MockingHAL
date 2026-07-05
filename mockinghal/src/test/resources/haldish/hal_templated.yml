@@ -20,23 +20,18 @@
 templated:
   path:
     /templated:
-      path:
-
-        # ── Index: GET /templated ─────────────────────────────────────────────
-
-        '':
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          path:
+            # ── Index: GET /templated ─────────────────────────────────────────────
+            '':
               resource:
                 _links:
                   self:
                     href: /templated
-                    type: application/hal+json
-                  parent:
-                    href: /
                     type: application/hal+json
                   curies:
                     - name: rfc
@@ -88,20 +83,12 @@ templated:
                   Clients must expand the template before following the link.
                   Each resource below demonstrates a different expression type or modifier.
 
-        # ── 3.2.2 Simple string expansion: {var} ─────────────────────────────
-
-        /simple:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.2 Simple string expansion: {var} ─────────────────────────────
+            /simple:
               resource:
                 _links:
                   self:
                     href: /templated/simple
-                  parent:
-                    href: /templated
                   "demo:by-id":
                     href: "/items/{id}"
                     templated: true
@@ -132,21 +119,12 @@ templated:
                   "{?from,to,format}=2026-01,2026-06,json": "/report?from=2026-01&to=2026-06&format=json"
                   "{id}=hello world": "/items/hello%20world"
                   "{tags*}=[news,tech,food]": /items/news,tech,food
-
-        # ── 3.2.3 Reserved expansion: {+var} ─────────────────────────────────
-
-        /reserved:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.3 Reserved expansion: {+var} ─────────────────────────────────
+            /reserved:
               resource:
                 _links:
                   self:
                     href: /templated/reserved
-                  parent:
-                    href: /templated
                   "demo:proxy":
                     href: "/proxy/{+url}"
                     templated: true
@@ -175,21 +153,12 @@ templated:
                   "{+base}=https://api.example.com": "https://api.example.com/docs/intro"
                   "{+assetPath}=/images/logo.png": "https://cdn.example.com/images/logo.png"
                   "{+urls*}=[api.a.com/v1,api.b.com/v2]": /cache/api.a.com/v1,api.b.com/v2
-
-        # ── 3.2.4 Fragment expansion: {#var} ─────────────────────────────────
-
-        /fragment:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.4 Fragment expansion: {#var} ─────────────────────────────────
+            /fragment:
               resource:
                 _links:
                   self:
                     href: /templated/fragment
-                  parent:
-                    href: /templated
                   "demo:anchor":
                     href: "/docs{#section}"
                     templated: true
@@ -214,21 +183,12 @@ templated:
                   "{#section}=installation": "/docs#installation"
                   "{#chapter,heading}=api,auth": "/page#api,auth"
                   "{#sections*}=[intro,setup,usage]": "/page#intro,setup,usage"
-
-        # ── 3.2.5 Label expansion with dot-prefix: {.var} ────────────────────
-
-        /label:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.5 Label expansion with dot-prefix: {.var} ────────────────────
+            /label:
               resource:
                 _links:
                   self:
                     href: /templated/label
-                  parent:
-                    href: /templated
                   "demo:extension":
                     href: "/data/export{.format}"
                     templated: true
@@ -258,21 +218,12 @@ templated:
                   "{.major,minor,patch}=2,1,0": /release.2.1.0
                   "{.env}=staging": "https://staging.api.example.com/"
                   "{.classes*}=[news,tech,featured]": /asset.news.tech.featured
-
-        # ── 3.2.6 Path segment expansion: {/var} ─────────────────────────────
-
-        /path-segment:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.6 Path segment expansion: {/var} ─────────────────────────────
+            /path-segment:
               resource:
                 _links:
                   self:
                     href: /templated/path-segment
-                  parent:
-                    href: /templated
                   "demo:versioned":
                     href: "/api{/version}/resources"
                     templated: true
@@ -297,21 +248,12 @@ templated:
                   "{/version}=v2": /api/v2/resources
                   "{/category,subcategory,slug}=tech,ktor,intro": /tech/ktor/intro
                   "{/segments*}=[api,v2,users]": /files/api/v2/users
-
-        # ── 3.2.7 Path-style parameter expansion: {;var} ─────────────────────
-
-        /path-params:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.7 Path-style parameter expansion: {;var} ─────────────────────
+            /path-params:
               resource:
                 _links:
                   self:
                     href: /templated/path-params
-                  parent:
-                    href: /templated
                   "demo:map":
                     href: "/map{;lat,lng,zoom}"
                     templated: true
@@ -336,21 +278,12 @@ templated:
                   "{;lat,lng,zoom}=40.7,-74,12": /map;lat=40.7;lng=-74;zoom=12
                   "{;width,height,format}=800,600,png": /render;width=800;height=600;format=png
                   "{;opts*}={sort:name,order:asc}": /items;sort=name;order=asc
-
-        # ── 3.2.8 Form-style query expansion: {?var} ─────────────────────────
-
-        /query:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.8 Form-style query expansion: {?var} ─────────────────────────
+            /query:
               resource:
                 _links:
                   self:
                     href: /templated/query
-                  parent:
-                    href: /templated
                   "demo:search":
                     href: "/items{?q,page,limit}"
                     templated: true
@@ -375,21 +308,12 @@ templated:
                   "{?q,page,limit}=hal,2,20": "/items?q=hal&page=2&limit=20"
                   "{?category,minPrice}=books,9.99": "/products?category=books&minPrice=9.99"
                   "{?fields*}=[title,author,summary]": "/users?fields=title&fields=author&fields=summary"
-
-        # ── 3.2.9 Form-style query continuation: {&var} ──────────────────────
-
-        /query-cont:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 3.2.9 Form-style query continuation: {&var} ──────────────────────
+            /query-cont:
               resource:
                 _links:
                   self:
                     href: /templated/query-cont
-                  parent:
-                    href: /templated
                   "demo:append":
                     href: "/items?type=hal{&q,sort}"
                     templated: true
@@ -419,21 +343,12 @@ templated:
                   "{&from,to,format}=2026-01,2026-06,csv": "/reports?scope=team&from=2026-01&to=2026-06&format=csv"
                   "{?q}=hypertext + {&page,limit}=2,10": "/search?q=hypertext&page=2&limit=10"
                   "{&tags*}=[news,tech] after ?type=post": "/items?type=post&tags=news&tags=tech"
-
-        # ── 2.4 Value modifiers: :maxlength and *explode ─────────────────────
-
-        /modifiers:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── 2.4 Value modifiers: :maxlength and *explode ─────────────────────
+            /modifiers:
               resource:
                 _links:
                   self:
                     href: /templated/modifiers
-                  parent:
-                    href: /templated
                   "demo:prefix-id":
                     href: "/cache/{etag:8}"
                     templated: true
@@ -486,21 +401,12 @@ templated:
                   "{?tags*}=[hal,json,rest]": "/items?tags=hal&tags=json&tags=rest"
                   "{/segments*}=[api,v2,users]": /tree/api/v2/users
                   "{?filters*}={status:active,role:admin}": "/query?status=active&role=admin"
-
-        # ── Combined example ──────────────────────────────────────────────────
-
-        /combined:
-          method:
-            GET:
-              code: 200
-              headerOut:
-                Content-Type: application/hal+json
+            # ── Combined example ──────────────────────────────────────────────────
+            /combined:
               resource:
                 _links:
                   self:
                     href: /templated/combined
-                  parent:
-                    href: /templated
                   "demo:content-api":
                     href: "/api{/version}{/type,slug}{.format}{?q,locale}{&page,limit}{&fields*}"
                     templated: true

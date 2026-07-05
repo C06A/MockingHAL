@@ -2,14 +2,14 @@
   "embedded": {
     "path": {
       "/embedded": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
+        "method": {
+          "GET": {
+            "code": 200,
+            "headerOut": {
+              "Content-Type": "application/hal+json"
+            },
+            "path": {
+              "": {
                 "resource": {
                   "_links": {
                     "self": {
@@ -80,15 +80,6 @@
                         "_links": {
                           "self": {
                             "href": "/embedded/with-links/1"
-                          },
-                          "next": {
-                            "href": "/embedded/with-links/2",
-                            "title": "Second link resource"
-                          },
-                          "related": {
-                            "href": "/embedded/simple",
-                            "type": "application/hal+json",
-                            "title": "The simple sample"
                           }
                         },
                         "title": "Link Resource 1",
@@ -98,10 +89,6 @@
                         "_links": {
                           "self": {
                             "href": "/embedded/with-links/2"
-                          },
-                          "prev": {
-                            "href": "/embedded/with-links/1",
-                            "title": "First link resource"
                           }
                         },
                         "title": "Link Resource 2",
@@ -152,24 +139,8 @@
                     }
                   }
                 }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_scalars": {
-    "path": {
-      "/embedded/scalars": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
+              },
+              "/scalars": {
                 "resource": {
                   "_links": {
                     "self": {
@@ -184,24 +155,8 @@
                   "string": "hello world",
                   "nullValue": null
                 }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_simple": {
-    "path": {
-      "/embedded/simple": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
+              },
+              "/simple": {
                 "resource": {
                   "_links": {
                     "self": {
@@ -215,32 +170,12 @@
                   "active": true,
                   "price": 9.99
                 }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_with_links_1": {
-    "path": {
-      "/embedded/with-links/1": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
+              },
+              "/with-links/1": {
                 "resource": {
                   "_links": {
                     "self": {
                       "href": "/embedded/with-links/1"
-                    },
-                    "next": {
-                      "href": "/embedded/with-links/2",
-                      "title": "Second link resource"
                     },
                     "related": {
                       "href": "/embedded/simple",
@@ -251,74 +186,81 @@
                   "title": "Link Resource 1",
                   "name": "First"
                 }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_with_links_2": {
-    "path": {
-      "/embedded/with-links/2": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
+              },
+              "/with-links/2": {
                 "resource": {
                   "_links": {
                     "self": {
                       "href": "/embedded/with-links/2"
-                    },
-                    "prev": {
-                      "href": "/embedded/with-links/1",
-                      "title": "First link resource"
                     }
                   },
                   "title": "Link Resource 2",
                   "name": "Second"
                 }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_deep": {
-    "path": {
-      "/embedded/deep": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
-                "resource": {
-                  "_links": {
-                    "self": {
-                      "href": "/embedded/deep"
-                    }
-                  },
-                  "title": "Deep — level 1",
-                  "level": 1,
-                  "_embedded": {
-                    "child": {
+              },
+              "/deep": {
+                "path": {
+                  "": {
+                    "resource": {
                       "_links": {
                         "self": {
-                          "href": "/embedded/deep/child"
+                          "href": "/embedded/deep"
                         }
                       },
-                      "title": "Deep — level 2",
-                      "level": 2,
+                      "title": "Deep — level 1",
+                      "level": 1,
                       "_embedded": {
-                        "grandchild": {
+                        "child": {
+                          "_links": {
+                            "self": {
+                              "href": "/embedded/deep/child"
+                            }
+                          },
+                          "title": "Deep — level 2",
+                          "level": 2,
+                          "_embedded": {
+                            "grandchild": {
+                              "_links": {
+                                "self": {
+                                  "href": "/embedded/deep/child/grandchild"
+                                }
+                              },
+                              "title": "Deep — level 3 (leaf)",
+                              "level": 3,
+                              "value": "deepest payload"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "/child": {
+                    "path": {
+                      "": {
+                        "resource": {
+                          "_links": {
+                            "self": {
+                              "href": "/embedded/deep/child"
+                            }
+                          },
+                          "title": "Deep — level 2",
+                          "level": 2,
+                          "_embedded": {
+                            "grandchild": {
+                              "_links": {
+                                "self": {
+                                  "href": "/embedded/deep/child/grandchild"
+                                }
+                              },
+                              "title": "Deep — level 3 (leaf)",
+                              "level": 3,
+                              "value": "deepest payload"
+                            }
+                          }
+                        }
+                      },
+                      "/grandchild": {
+                        "resource": {
                           "_links": {
                             "self": {
                               "href": "/embedded/deep/child/grandchild"
@@ -331,73 +273,6 @@
                       }
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_deep_child": {
-    "path": {
-      "/embedded/deep/child": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
-                "resource": {
-                  "_links": {
-                    "self": {
-                      "href": "/embedded/deep/child"
-                    }
-                  },
-                  "title": "Deep — level 2",
-                  "level": 2,
-                  "_embedded": {
-                    "grandchild": {
-                      "_links": {
-                        "self": {
-                          "href": "/embedded/deep/child/grandchild"
-                        }
-                      },
-                      "title": "Deep — level 3 (leaf)",
-                      "level": 3,
-                      "value": "deepest payload"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "embedded_deep_child_grandchild": {
-    "path": {
-      "/embedded/deep/child/grandchild": {
-        "path": {
-          "": {
-            "method": {
-              "GET": {
-                "code": 200,
-                "headerOut": {
-                  "Content-Type": "application/hal+json"
-                },
-                "resource": {
-                  "_links": {
-                    "self": {
-                      "href": "/embedded/deep/child/grandchild"
-                    }
-                  },
-                  "title": "Deep — level 3 (leaf)",
-                  "level": 3,
-                  "value": "deepest payload"
                 }
               }
             }
