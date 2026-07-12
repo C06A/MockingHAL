@@ -2,145 +2,143 @@
   "json_samples": {
     "path": {
       "/json-samples": {
-        "path": {
-          "/empty": {
-            "method": {
-              "GET": {
-                "code": 204
-              }
-            }
-          }
-        },
         "method": {
           "GET": {
-            "code": 200,
-            "headerOut": {
-              "Content-Type": "application/hal+json"
-            },
             "path": {
-              "": {
-                "resource": {
-                  "_links": {
-                    "self": {
-                      "href": "/json-samples",
-                      "type": "application/hal+json"
-                    },
-                    "curies": [
-                      {
-                        "name": "doc",
-                        "href": "/docs/json-samples#{rel}",
-                        "templated": true
-                      }
-                    ],
-                    "doc:empty": {
-                      "href": "/json-samples/empty",
-                      "title": "No content (204)"
-                    },
-                    "doc:scalars": [
-                      {
-                        "href": "/json-samples/scalar/true",
-                        "name": "boolean-true",
-                        "title": "Boolean true"
-                      },
-                      {
-                        "href": "/json-samples/scalar/false",
-                        "name": "boolean-false",
-                        "title": "Boolean false"
-                      },
-                      {
-                        "href": "/json-samples/scalar/integer",
-                        "name": "integer",
-                        "title": "Integer"
-                      },
-                      {
-                        "href": "/json-samples/scalar/number",
-                        "name": "number",
-                        "title": "Number (float)"
-                      },
-                      {
-                        "href": "/json-samples/scalar/string",
-                        "name": "string",
-                        "title": "String"
-                      }
-                    ],
-                    "doc:json": {
-                      "href": "/json-samples/json",
-                      "title": "Multi-level JSON object"
-                    },
-                    "doc:array": {
-                      "href": "/json-samples/array",
-                      "title": "JSON array document"
-                    }
-                  },
-                  "title": "JSON Samples",
-                  "description": "Plain JSON examples — valid HAL resources that omit the optional _links and _embedded properties"
-                }
-              },
-              "/scalar": {
+              "/empty": {
+                "code": 204
+                },
+              "^": {
+                "code": 200,
+                "headerOut": {
+                  "Content-Type": "application/hal+json"
+                },
                 "path": {
-                  "/true": {
-                    "resource": true
-                  },
-                  "/false": {
-                    "resource": false
-                  },
-                  "/integer": {
-                    "resource": 42
-                  },
-                  "/number": {
-                    "resource": 3.14
-                  },
-                  "/string": {
-                    "resource": "hello world"
-                  }
-                }
-              },
-              "/json": {
-                "resource": {
-                  "string": "hello",
-                  "integer": 42,
-                  "number": 3.14,
-                  "boolean": true,
-                  "null_value": null,
-                  "nested": {
-                    "key": "value",
-                    "deeper": {
-                      "level": 3
+                  "": {
+                    "resource": {
+                      "_links": {
+                        "self": {
+                          "href": "/json-samples",
+                          "type": "application/hal+json"
+                        },
+                        "curies": [
+                          {
+                            "name": "doc",
+                            "href": "/docs/json-samples#{rel}",
+                            "templated": true
+                          }
+                        ],
+                        "doc:empty": {
+                          "href": "/json-samples/empty",
+                          "title": "No content (204)"
+                        },
+                        "doc:scalars": [
+                          {
+                            "href": "/json-samples/scalar/true",
+                            "name": "boolean-true",
+                            "title": "Boolean true"
+                          },
+                          {
+                            "href": "/json-samples/scalar/false",
+                            "name": "boolean-false",
+                            "title": "Boolean false"
+                          },
+                          {
+                            "href": "/json-samples/scalar/integer",
+                            "name": "integer",
+                            "title": "Integer"
+                          },
+                          {
+                            "href": "/json-samples/scalar/number",
+                            "name": "number",
+                            "title": "Number (float)"
+                          },
+                          {
+                            "href": "/json-samples/scalar/string",
+                            "name": "string",
+                            "title": "String"
+                          }
+                        ],
+                        "doc:json": {
+                          "href": "/json-samples/json",
+                          "title": "Multi-level JSON object"
+                        },
+                        "doc:array": {
+                          "href": "/json-samples/array",
+                          "title": "JSON array document"
+                        }
+                      },
+                      "title": "JSON Samples",
+                      "description": "Plain JSON examples — valid HAL resources that omit the optional _links and _embedded properties"
                     }
                   },
-                  "array": [
-                    1,
-                    "two",
-                    true
-                  ]
-                }
-              },
-              "/array": {
-                "resource": [
-                  true,
-                  false,
-                  42,
-                  3.14,
-                  "hello world",
-                  {
-                    "string": "hello",
-                    "integer": 42,
-                    "number": 3.14,
-                    "boolean": true,
-                    "null_value": null,
-                    "nested": {
-                      "key": "value",
-                      "deeper": {
-                        "level": 3
+                  "/scalar": {
+                    "path": {
+                      "/true": {
+                        "resource": true
+                      },
+                      "/false": {
+                        "resource": false
+                      },
+                      "/integer": {
+                        "resource": 42
+                      },
+                      "/number": {
+                        "resource": 3.14
+                      },
+                      "/string": {
+                        "resource": "hello world"
                       }
-                    },
-                    "array": [
-                      1,
-                      "two",
-                      true
+                    }
+                  },
+                  "/json": {
+                    "resource": {
+                      "string": "hello",
+                      "integer": 42,
+                      "number": 3.14,
+                      "boolean": true,
+                      "null_value": null,
+                      "nested": {
+                        "key": "value",
+                        "deeper": {
+                          "level": 3
+                        }
+                      },
+                      "array": [
+                        1,
+                        "two",
+                        true
+                      ]
+                    }
+                  },
+                  "/array": {
+                    "resource": [
+                      true,
+                      false,
+                      42,
+                      3.14,
+                      "hello world",
+                      {
+                        "string": "hello",
+                        "integer": 42,
+                        "number": 3.14,
+                        "boolean": true,
+                        "null_value": null,
+                        "nested": {
+                          "key": "value",
+                          "deeper": {
+                            "level": 3
+                          }
+                        },
+                        "array": [
+                          1,
+                          "two",
+                          true
+                        ]
+                      }
                     ]
                   }
-                ]
+                }
               }
             }
           }
