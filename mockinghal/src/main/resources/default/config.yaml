@@ -146,6 +146,9 @@ api_root:
               "mocking:":
                 href: /
                 title: End point to get root documentation page
+              "public services":
+                href: /examples
+                title: Publicly accessible services, which using HAL
             title: MockingHAL
             version: "1.0"
             description: >-
@@ -188,6 +191,50 @@ api_root:
             usage_multipart: "curl -X POST http://localhost:8080/
               -F part1=@base.yaml
               -F part2=@overlay.yaml"
+
+# ── Public HAL services ───────────────────────────────────────────────────────
+# Curated list of publicly reachable services that speak HAL, linked from the
+# API root as the "public services" relation.  The svc: CURI expands to a
+# fragment on the /docs/services page describing each entry.
+examples:
+  path:
+    /examples:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              self:
+                href: /examples
+              curies:
+                - name: svc
+                  href: "/docs/services{#rel}"
+                  templated: true
+              "svc:foxy":
+                href: https://api.foxy.io/
+                type: application/hal+json
+                title: Foxy.io — hypermedia e-commerce API (HAL default, XML on request)
+              "svc:dwolla":
+                href: https://api.dwolla.com/
+                type: application/hal+json
+                title: Dwolla — payments API (JSON-HAL)
+              "svc:avid":
+                href: https://developer.avid.com/ctms/
+                type: application/hal+json
+                title: Avid MediaCentral — CTMS HAL API
+              "svc:halspec":
+                href: https://stateless.group/hal_specification.html
+                type: text/html
+                title: HAL specification — hal+json and hal+xml reference
+            title: Public HAL services
+            description: >-
+              Publicly reachable services that expose their APIs in HAL.
+              Follow a svc: link to reach the live service; dereference the
+              CURI for a short description.  This list is curated and will be
+              expanded or cleared over time.
+
 # ── Documentation pages ───────────────────────────────────────────────────────
 # Served at /docs/{rel} — the CURI-expanded URL for each mocking: relation.
 docs:
@@ -591,6 +638,82 @@ docs:
                 <p>
                   To load a <em>specific</em> configuration instead of the defaults, use
                   <a href="/docs/replace"><code>POST /</code></a>.
+                </p>
+                </body>
+                </html>
+            /services:
+              resource: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="utf-8">
+                <title>Public HAL services — MockingHAL Docs</title>
+                <style>
+                  body{font-family:sans-serif;max-width:820px;margin:2em auto;line-height:1.6;color:#222}
+                  a{color:#0055cc}
+                  h1{border-bottom:2px solid #0055cc;padding-bottom:.3em}
+                  h2{color:#333;margin-top:1.6em}
+                  code,pre{background:#f0f0f0;border-radius:3px;font-size:.95em}
+                  code{padding:.15em .4em}
+                  pre{padding:1em;overflow-x:auto}
+                  .note{background:#fffbdd;border-left:4px solid #e6c000;padding:.6em 1em;margin:1em 0}
+                </style>
+                </head>
+                <body>
+                <p><a href="/docs">← Docs index</a></p>
+                <h1>Public HAL services</h1>
+                <div class="note">
+                  Short notes on the publicly reachable HAL services linked from
+                  <a href="/examples"><code>/examples</code></a>.  Each heading is the CURI
+                  target for a <code>svc:</code> relation.  This list is curated and changes
+                  over time.
+                </div>
+
+                <h2 id="foxy">Foxy.io</h2>
+                <p>
+                  Foxy.io is a hosted e-commerce and checkout platform.  Its hypermedia API
+                  uses <strong>HAL as the default representation</strong>
+                  (<code>application/hal+json</code>); it also offers Siren at a basic level
+                  and can serve XML for clients that still require it.
+                </p>
+                <p>
+                  Official documentation:
+                  <a href="https://api.foxy.io/">https://api.foxy.io/</a>
+                </p>
+
+                <h2 id="dwolla">Dwolla</h2>
+                <p>
+                  Dwolla is a US bank-transfer (ACH) payments platform.  Its REST API is
+                  built on <strong>JSON-HAL</strong> (<code>application/hal+json</code>),
+                  using <code>_links</code> and <code>_embedded</code> to drive the payment
+                  workflow.  Live endpoints require authentication; the reference docs are
+                  public.
+                </p>
+                <p>
+                  Official documentation:
+                  <a href="https://developers.dwolla.com/">https://developers.dwolla.com/</a>
+                </p>
+
+                <h2 id="avid">Avid MediaCentral (CTMS)</h2>
+                <p>
+                  The Avid MediaCentral Media Suite / Connectivity Toolkit (CTMS) API is a
+                  broadcast media asset-management API following HATEOAS principles with the
+                  <strong>HAL</strong> standard.  A caller navigates asset resources by
+                  following links from a service-registry entry point.
+                </p>
+                <p>
+                  Official documentation:
+                  <a href="https://developer.avid.com/ctms/">https://developer.avid.com/ctms/</a>
+                </p>
+
+                <h2 id="halspec">HAL specification</h2>
+                <p>
+                  Not a service, but the canonical reference: Mike Kelly's HAL specification
+                  defines both <code>application/hal+json</code> and
+                  <code>application/hal+xml</code> — the conventions the services above follow.
+                </p>
+                <p>
+                  Specification:
+                  <a href="https://stateless.group/hal_specification.html">https://stateless.group/hal_specification.html</a>
                 </p>
                 </body>
                 </html>
