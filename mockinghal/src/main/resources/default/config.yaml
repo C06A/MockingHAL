@@ -679,6 +679,42 @@ docs:
                   Official documentation:
                   <a href="https://api.foxy.io/">https://api.foxy.io/</a>
                 </p>
+                <p>
+                  Foxy's API is protected by <strong>OAuth 2.0</strong> — every request must
+                  carry an <code>Authorization: Bearer &lt;access-token&gt;</code> header.  See
+                  <a href="https://api.foxy.io/docs/authentication">Foxy OAuth 2.0
+                  Authentication</a> for obtaining a token.
+                </p>
+                <p>
+                  With <strong>NaHAL</strong>, attach the
+                  <code>haldish-plugin-bearer-token</code> plugin so it injects the header
+                  automatically.  For a quick, short-lived token use a static value:
+                </p>
+                <pre># plugins.yaml
+                com:
+                  helpchoice:
+                    nahal:
+                      plugin:
+                        bearertoken:
+                          BearerTokenPlugin:
+                            token: eyJhbGci...        # Foxy access token</pre>
+                <p>
+                  Foxy access tokens expire after 2 hours, so for anything beyond a quick test
+                  use a <strong>dynamic provider</strong> instead — implement
+                  <code>BearerTokenProvider</code> to exchange your refresh token for a fresh
+                  access token on every request:
+                </p>
+                <pre># plugins.yaml
+                com:
+                  helpchoice:
+                    nahal:
+                      plugin:
+                        bearertoken:
+                          BearerTokenPlugin:
+                            providerClass: com.example.FoxyOAuthTokenProvider</pre>
+                <p>
+                  Point <code>HALDISH_CONFIG</code> at the file when launching NaHAL.
+                </p>
 
                 <h2 id="dwolla">Dwolla</h2>
                 <p>
