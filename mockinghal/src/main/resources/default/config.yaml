@@ -728,6 +728,21 @@ docs:
                   Official documentation:
                   <a href="https://developers.dwolla.com/">https://developers.dwolla.com/</a>
                 </p>
+                <p>
+                  Dwolla also requires an <strong>OAuth 2.0</strong> access token, even to
+                  explore their Sandbox — requests carry an
+                  <code>Authorization: Bearer &lt;access-token&gt;</code> header.  Create a
+                  Sandbox application and obtain a token by following the
+                  <a href="https://developers.dwolla.com/docs/quickstart">Dwolla
+                  Quickstart</a>.
+                </p>
+                <p>
+                  Attach it in <strong>NaHAL</strong> with the same
+                  <code>haldish-plugin-bearer-token</code> plugin used for Foxy above (see the
+                  <a href="#foxy">Foxy.io</a> section).  Dwolla access tokens are short-lived,
+                  so prefer the dynamic <code>BearerTokenProvider</code> to refresh them
+                  automatically.
+                </p>
 
                 <h2 id="avid">Avid MediaCentral (CTMS)</h2>
                 <p>
