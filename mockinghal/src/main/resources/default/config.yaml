@@ -755,6 +755,21 @@ docs:
                   Official documentation:
                   <a href="https://developer.avid.com/ctms/">https://developer.avid.com/ctms/</a>
                 </p>
+                <p>
+                  Avid's platform also requires authentication: it uses
+                  <strong>OAuth 2.0</strong> bearer tokens obtained through an identity
+                  provider (OAuth2 / PingFederate, with OpenID Connect support).  Requests
+                  then carry an <code>Authorization: Bearer &lt;access-token&gt;</code> header.
+                  See
+                  <a href="https://developer.avid.com/upstream/platformAuthorization/documentation-public/md/authentication.html">Avid
+                  Platform Authorization</a> for the flow.
+                </p>
+                <p>
+                  As with the services above, attach the token in <strong>NaHAL</strong> via
+                  the <code>haldish-plugin-bearer-token</code> plugin (see the
+                  <a href="#foxy">Foxy.io</a> section) — use the dynamic
+                  <code>BearerTokenProvider</code> to refresh expiring tokens automatically.
+                </p>
 
                 <h2 id="halspec">HAL specification</h2>
                 <p>
