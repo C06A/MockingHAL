@@ -224,6 +224,22 @@ examples:
                 href: https://developer.avid.com/ctms/
                 type: application/hal+json
                 title: Avid MediaCentral — CTMS HAL API
+              "svc:nasa":
+                - name: apod
+                  href: "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY{&date,start_date,end_date,count,thumbs}"
+                  templated: true
+                  title: NASA APOD — Astronomy Picture of the Day
+                - name: neo-feed
+                  href: "https://api.nasa.gov/neo/rest/v1/feed?api_key=DEMO_KEY{&start_date,end_date}"
+                  templated: true
+                  title: NASA NeoWs — Near Earth Object feed by date range
+                - name: neo-lookup
+                  href: "https://api.nasa.gov/neo/rest/v1/neo{/asteroid_id}?api_key=DEMO_KEY"
+                  templated: true
+                  title: NASA NeoWs — asteroid lookup by id
+                - name: neo-browse
+                  href: "https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=DEMO_KEY"
+                  title: NASA NeoWs — browse the asteroid dataset
               "svc:halspec":
                 href: https://stateless.group/hal_specification.html
                 type: text/html
@@ -769,6 +785,29 @@ docs:
                   the <code>haldish-plugin-bearer-token</code> plugin (see the
                   <a href="#foxy">Foxy.io</a> section) — use the dynamic
                   <code>BearerTokenProvider</code> to refresh expiring tokens automatically.
+                </p>
+
+                <h2 id="nasa">NASA Open APIs</h2>
+                <p>
+                  NASA publishes a family of open data services under one portal.  These are
+                  plain JSON APIs (not HAL), grouped here as a <code>svc:nasa</code> link array
+                  of URI-templated endpoints — expand the template variables (dates, ids, query
+                  options) before dereferencing.  Seeded endpoints:
+                </p>
+                <ul>
+                  <li><strong>APOD</strong> — Astronomy Picture of the Day
+                    (<code>/planetary/apod</code>)</li>
+                  <li><strong>NeoWs feed</strong> — Near Earth Objects by date range
+                    (<code>/neo/rest/v1/feed</code>)</li>
+                  <li><strong>NeoWs lookup</strong> — a single asteroid by id
+                    (<code>/neo/rest/v1/neo/{asteroid_id}</code>)</li>
+                  <li><strong>NeoWs browse</strong> — page through the asteroid dataset
+                    (<code>/neo/rest/v1/neo/browse</code>)</li>
+                </ul>
+                <p>
+                  The seed links use the shared <code>DEMO_KEY</code>, which is heavily rate
+                  limited.  Get a free <code>api_key</code> and browse these and other NASA
+                  APIs at <a href="https://api.nasa.gov">https://api.nasa.gov</a>.
                 </p>
 
                 <h2 id="halspec">HAL specification</h2>
