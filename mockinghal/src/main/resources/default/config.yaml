@@ -240,6 +240,10 @@ examples:
                 - name: neo-browse
                   href: "https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=DEMO_KEY"
                   title: NASA NeoWs — browse the asteroid dataset
+                - name: epic
+                  href: "https://api.nasa.gov/EPIC/api{/collection}{/data}?api_key=DEMO_KEY"
+                  templated: true
+                  title: NASA EPIC — Earth Polychromatic Imaging Camera imagery
               "svc:halspec":
                 href: https://stateless.group/hal_specification.html
                 type: text/html
@@ -803,6 +807,12 @@ docs:
                     (<code>/neo/rest/v1/neo/{asteroid_id}</code>)</li>
                   <li><strong>NeoWs browse</strong> — page through the asteroid dataset
                     (<code>/neo/rest/v1/neo/browse</code>)</li>
+                  <li><strong>EPIC</strong> — Earth Polychromatic Imaging Camera imagery
+                    (<code>/EPIC/api/{collection}/{data}</code>);
+                    <code>collection</code> is one of <code>natural</code>,
+                    <code>enhanced</code>, <code>aerosol</code>, <code>cloud</code>, and the
+                    optional <code>data</code> is one of <code>date</code>, <code>all</code>,
+                    <code>available</code></li>
                 </ul>
                 <p>
                   The seed links use the shared <code>DEMO_KEY</code>, which is heavily rate
