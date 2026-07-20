@@ -1,0 +1,58 @@
+# =============================================================================
+# links.yaml — mockinghal config for The Color API (thecolorapi.com)
+#
+# Top HAL resource linking out to the public service.
+# =============================================================================
+
+# ── root ─────────────────────────────────────────────────────────────────────
+
+root:
+  path:
+    /:
+      method:
+        GET:
+          code: 200
+          headerOut:
+            Content-Type: application/hal+json
+          resource:
+            _links:
+              CURIE:
+                - href: "https://www.thecolorapi.com"
+                  name: color
+              self:
+                href: /
+                type: application/hal+json
+              about:
+                href: "https://www.thecolorapi.com"
+                type: text/html
+                title: The Color API website
+              color:
+                - href: "color:/id?format=json{&hex,rgb,hsl,cmyk}"
+                  templated: true
+                  type: application/hal+json
+                - href: "color:/id?format=svg{&hex,rgb,hsl,cmyk,w,named}"
+                  templated: true
+                  type: application/svg
+                - href: "color:/id?format=html{&hex,rgb,hsl,cmyk}"
+                  templated: true
+                  type: text/html
+              scheme:
+                - href: "color:/scheme?format=json{&hex,rgb,hsl,cmyk,mode,count}"
+                  templated: true
+                  type: application/hal+json
+                - href: "color:/scheme?format=svg{&hex,rgb,hsl,cmyk,named,mode,count}"
+                  templated: true
+                  type: application/svg
+                - href: "color:/scheme?format=html{&hex,rgb,hsl,cmyk,mode,count}"
+                  templated: true
+                  type: text/html
+            title: The Color API
+            format:
+              hex: "Valid hex code: 3 or 6 HEX-digits: 0...9,A...F"
+              rgb: "Valid rgb color: 3 numbers between 0 and 255 or rgb(#,#,#)"
+              hsl: "Valid hsl color: number between 0 and 255, percent number, percent number"
+              cmyk: "Valid cmyk color: 4 numbers or cmyk(#,#,#,#)"
+              named: "Boolean. Whether to print the color names on resulting image"
+              mode: "Define mode by which to generate the scheme from the seed color: monochrome, monochrome-dark, monochrome-light, analogic, complement, analogic-complement, triad, quad"
+              count: "Number of colors to return"
+              w: "Height of resulting image, only applicable on SVG format"
