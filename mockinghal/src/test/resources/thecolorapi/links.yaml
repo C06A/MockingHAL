@@ -27,23 +27,23 @@ root:
                 type: text/html
                 title: The Color API website
               color:
-                - href: "color:/id?format=json{&hex,rgb,hsl,cmyk}"
+                - href: "color:/id?format=json{&hex,rgb,hsl,hsv,cmyk}"
                   templated: true
                   type: application/hal+json
-                - href: "color:/id?format=svg{&hex,rgb,hsl,cmyk,w,named}"
+                - href: "color:/id?format=svg{&hex,rgb,hsl,hsv,cmyk,w,named}"
                   templated: true
                   type: application/svg
-                - href: "color:/id?format=html{&hex,rgb,hsl,cmyk}"
+                - href: "color:/id?format=html{&hex,rgb,hsl,hsv,cmyk}"
                   templated: true
                   type: text/html
               scheme:
-                - href: "color:/scheme?format=json{&hex,rgb,hsl,cmyk,mode,count}"
+                - href: "color:/scheme?format=json{&hex,rgb,hsl,hsv,cmyk,named,mode,count}"
                   templated: true
                   type: application/hal+json
-                - href: "color:/scheme?format=svg{&hex,rgb,hsl,cmyk,named,mode,count}"
+                - href: "color:/scheme?format=svg{&hex,rgb,hsl,hsv,cmyk,named,mode,count}"
                   templated: true
                   type: application/svg
-                - href: "color:/scheme?format=html{&hex,rgb,hsl,cmyk,mode,count}"
+                - href: "color:/scheme?format=html{&hex,rgb,hsl,hsv,cmyk,named,mode,count}"
                   templated: true
                   type: text/html
             title: The Color API
